@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -38,6 +38,14 @@ jobs:
         run: python backend/scripts/fetch_raw.py
       - name: 사이트 빌드
         run: bash scripts/build_pages.sh
+      - name: 정적 파일 브랜치(dist) 갱신
+        run: |
+          rm -rf /tmp/dist && cp -r site /tmp/dist && cd /tmp/dist
+          git init -q -b dist
+          git config user.name "kjhoeakjy"
+          git config user.email "kjhoeakjy@users.noreply.github.com"
+          git add -A && git commit -qm "배포 파일 갱신"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" dist
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

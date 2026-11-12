@@ -1,6 +1,6 @@
 """yfinance 기반 현물·일별 시세·옵션 체인 수집.
 
-yfinance는 Yahoo의 공식 지원 서비스가 아니며 개인 연구·교육 목적으로 사용한다.
+yfinance는 Yahoo의 공식 지원 서비스가 아니며 개인 연구 목적으로 사용한다.
 수집 값은 지연·누락·수정될 수 있다.
 """
 from __future__ import annotations

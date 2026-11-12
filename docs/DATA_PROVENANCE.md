@@ -4,7 +4,7 @@
 
 | 자료 | 공급자 | 내용 | 비고 |
 |---|---|---|---|
-| SPY·QQQ 일별 시세 | Yahoo Finance (yfinance) | 최근 2년 종가, 조정종가, 배당 | 공식 지원 서비스가 아님. 개인 연구·교육 용도. 지연·수정 가능 |
+| SPY·QQQ 일별 시세 | Yahoo Finance (yfinance) | 최근 2년 종가, 조정종가, 배당 | 공식 지원 서비스가 아님. 개인 연구 용도. 지연·수정 가능 |
 | 옵션 체인 | Yahoo Finance (yfinance) | 만기·행사가별 호가, 거래량, 미결제약정, 공급자 IV | 상장 옵션은 미국형. 참고용 |
 | 금리 | FRED DGS3MO, DGS1, DGS2 | 미국 국채 고정만기 수익률(%) | API 키가 있으면 공식 API, 없으면 공개 CSV |
 | 가상 자료 | backend/fixtures/synthetic_demo.json | 시드 고정 상관 GBM으로 만든 520거래일 경로 | 실제 시세가 아님. backend/scripts/make_fixture.py로 재생성 |

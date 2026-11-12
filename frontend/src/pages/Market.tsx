@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { download, get, send } from "../api";
+import { download, get, send, STATIC } from "../api";
 import type { Ctx } from "../App";
-import { axis, Badge, Card, chartTip, Err, Explain, Field, fmt, Kpi, Loading, pct, UND, usd, useAsync } from "../ui";
+import { axis, Badge, Card, chartTip, Err, Field, fmt, Kpi, Loading, pct, UND, usd, useAsync } from "../ui";
 
 export default function Market({ snap, setSnap, bumpBook }: Ctx) {
   const [status, setStatus] = useState<any[]>([]);
@@ -42,14 +42,12 @@ export default function Market({ snap, setSnap, bumpBook }: Ctx) {
   return (
     <>
       <h1>① 시장 데이터</h1>
-      <Explain read={["값별 구분: 실측(REAL), 캐시(CACHED), 수기 입력(MANUAL), 합성(SYNTHETIC), 모형 추정(MODEL)", "변동성·상관계수는 과거 가격 기반 대용치"]}
-        missing="실시간 호가, 변동성 곡면, 만기별 할인곡선, 거래소 휴장일" />
       <Err e={err} />
       <div className="grid g4">
-        {UND.map((u) => <Kpi key={u} label={`${u} 현물가`} badge={i.spots[u].label} value={usd(i.spots[u].value)} sub={`${snap.quotes[u].trade_date} 종가`} />)}
-        {UND.map((u) => <Kpi key={u + "v"} label={`${u} 변동성`} badge={i.vols[u].label} value={pct(i.vols[u].value)} sub="252일 실현변동성, 연율" />)}
-        <Kpi label="상관계수" badge={i.corr.label} value={fmt(i.corr.value, 3)} sub={`${i.corr.n_obs}거래일 로그수익률`} />
-        <Kpi label="무위험 금리 (2년)" badge={r2.label} value={pct(r2.value)} sub="국채 수익률 기반 평탄 금리" />
+        {UND.map((u) => <Kpi key={u} label={`${u} 현물가`} value={usd(i.spots[u].value)} />)}
+        {UND.map((u) => <Kpi key={u + "v"} label={`${u} 변동성`} value={pct(i.vols[u].value)} sub="252일 실현" />)}
+        <Kpi label="상관계수" value={fmt(i.corr.value, 3)} />
+        <Kpi label="무위험 금리 (2년)" value={pct(r2.value)} />
       </div>
       <div className="grid g2">
         <Card title="데이터 수집">
@@ -60,16 +58,15 @@ export default function Market({ snap, setSnap, bumpBook }: Ctx) {
             <button className="b sec" onClick={exportSnap}>스냅샷 내보내기</button>
           </div>
           {busy && <Loading text="수집 중" />}
-          {status.map((s, k) => <div key={k} className={s.ok ? "note" : "note neg"}>{s.ok ? "성공" : "실패"} · {s.step}: {s.message}</div>)}
+          {status.filter((s) => !s.ok).map((s, k) => <div key={k} className="note neg">{s.step} 실패: {s.message}</div>)}
           <label style={{ marginTop: 10 }}>스냅샷 선택
             <select value={snap.snapshot_id} onChange={(e) => pick(e.target.value)}>
               {list.find((s) => s.id === snap.snapshot_id) ? null : <option value={snap.snapshot_id}>{snap.as_of} · {snap.mode}</option>}
               {list.map((s) => <option key={s.id} value={s.id}>{s.as_of} · {s.mode} · {new Date(s.created_at).toLocaleString("ko-KR")}</option>)}
             </select>
           </label>
-          {(snap.quality_flags.length > 0 || snap.warnings.length > 0) && <ul className="note warn">{[...snap.quality_flags, ...snap.warnings].map((w: string, k: number) => <li key={k}>{w}</li>)}</ul>}
         </Card>
-        <Card title="수기 입력" right={<Badge label="MANUAL SCENARIO" />}>
+        <Card title="수기 입력">
           <div className="form">
             <Field label="SPY 현물가" value={m.sSPY} onChange={(v) => setM({ ...m, sSPY: v })} />
             <Field label="QQQ 현물가" value={m.sQQQ} onChange={(v) => setM({ ...m, sQQQ: v })} />
@@ -81,21 +78,20 @@ export default function Market({ snap, setSnap, bumpBook }: Ctx) {
             <Field label="상관계수" value={m.corr} step={0.01} onChange={(v) => setM({ ...m, corr: v })} />
           </div>
           <div className="row"><button className="b" onClick={applyManual}>스냅샷 생성</button></div>
-          <p className="note">원본 스냅샷 보존. 계약의 행사가·기준가 불변.</p>
         </Card>
       </div>
       <div className="grid g2">
         <Card title="금리 · 배당 · 변동성">
           <div className="tw"><table>
-            <thead><tr><th>항목</th><th>값</th><th className="l">구분</th><th className="l">산출 근거</th></tr></thead>
+            <thead><tr><th>항목</th><th>값</th><th className="l">출처</th></tr></thead>
             <tbody>
-              {i.curve.map((p: any) => <tr key={p.series}><td>{p.series} ({p.tenor_years}년)</td><td>{pct(p.value)}</td><td className="l"><Badge label={p.label} /></td><td className="wrap">{p.source}{p.observed_date ? ` · 관측일 ${p.observed_date}` : ""}</td></tr>)}
-              {UND.map((u) => <tr key={u}><td>{u} 배당수익률</td><td>{pct(i.divs[u].value)}</td><td className="l"><Badge label={i.divs[u].label} /></td><td className="wrap">{i.divs[u].source}</td></tr>)}
-              {UND.map((u) => <tr key={u + "rv"}><td>{u} 실현변동성 20/60/252일</td><td>{["20", "60", "252"].map((w) => pct(snap.realized_vol[u][w], 1)).join(" / ")}</td><td className="l"><Badge label={i.vols[u].label} /></td><td className="wrap">로그수익률 표준편차 × √252</td></tr>)}
+              {i.curve.map((p: any) => <tr key={p.series}><td>{p.series} ({p.tenor_years}년)</td><td>{pct(p.value)}</td><td className="l">{p.source}</td></tr>)}
+              {UND.map((u) => <tr key={u}><td>{u} 배당수익률</td><td>{pct(i.divs[u].value)}</td><td className="l">{i.divs[u].source}</td></tr>)}
+              {UND.map((u) => <tr key={u + "rv"}><td>{u} 실현변동성 20/60/252일</td><td>{["20", "60", "252"].map((w) => pct(snap.realized_vol[u][w], 1)).join(" / ")}</td><td className="l">조정종가</td></tr>)}
             </tbody>
           </table></div>
         </Card>
-        <Card title="조정종가 추이 (시작일 = 100)" right={<Badge label={snap.quotes.SPY.label} />}>
+        <Card title="조정종가 추이 (시작일 = 100)">
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={hist}><CartesianGrid stroke="var(--line)" vertical={false} />
               <XAxis dataKey="date" {...axis} minTickGap={60} /><YAxis {...axis} domain={["auto", "auto"]} width={40} />
@@ -106,19 +102,17 @@ export default function Market({ snap, setSnap, bumpBook }: Ctx) {
           </ResponsiveContainer>
         </Card>
       </div>
-      <Card title="상장 옵션 호가 대비 유럽형 모형가 (참고)" right={<button className="b sec" onClick={() => chain.run(() => get(`/market/options/SPY?snapshot_id=${snap.snapshot_id}`))}>SPY 옵션 체인 조회</button>}>
+      {!STATIC && <Card title="상장 옵션 호가 대비 BSM 이론가" right={<button className="b sec" onClick={() => chain.run(() => get(`/market/options/SPY?snapshot_id=${snap.snapshot_id}`))}>SPY 옵션 체인 조회</button>}>
         {chain.loading && <Loading text="조회 중" />}
         <Err e={chain.error} />
         {chain.data && !chain.data.available && <p className="note warn">조회 불가: {chain.data.reason}</p>}
         {chain.data?.available && <>
-          <p className="note">만기 {chain.data.expiry} · {chain.data.source} · {chain.data.snapshot_time} <Badge label="REAL MARKET DATA" /></p>
           <div className="tw" style={{ maxHeight: 320, overflowY: "auto" }}><table>
-            <thead><tr><th>행사가</th><th>구분</th><th>매수호가</th><th>매도호가</th><th>중간값</th><th>모형가</th><th>내재변동성(유럽형 역산)</th><th>공급자 IV</th><th className="l">상태</th></tr></thead>
+            <thead><tr><th>행사가</th><th>구분</th><th>매수호가</th><th>매도호가</th><th>중간값</th><th>모형가</th><th>내재변동성</th><th>공급자 IV</th><th className="l">상태</th></tr></thead>
             <tbody>{chain.data.rows.map((r: any, k: number) => <tr key={k}><td>{fmt(r.strike, 0)}</td><td>{r.option_type}</td><td>{fmt(r.bid)}</td><td>{fmt(r.ask)}</td><td>{fmt(r.mid)}</td><td>{fmt(r.model_price_snapshot_vol)}</td><td>{r.european_model_implied_proxy ? pct(r.european_model_implied_proxy, 1) : "IV unavailable"}</td><td>{pct(r.provider_iv, 1)}</td><td className="l mut">{[r.iv_status, ...r.quality_flags].join(", ")}</td></tr>)}</tbody>
           </table></div>
         </>}
-        {!chain.loading && <p className="note">상장 SPY 옵션은 미국형으로 유럽형 모형가와 불일치.</p>}
-      </Card>
+      </Card>}
     </>
   );
 }

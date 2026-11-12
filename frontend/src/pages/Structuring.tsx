@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ErrorBar, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { send } from "../api";
 import type { Ctx } from "../App";
-import { axis, Badge, Card, CAT_KR, chartTip, Err, Explain, Field, fmt, Kpi, Loading, pct, Signed, usd, useAsync } from "../ui";
+import { axis, Badge, Card, CAT_KR, chartTip, Err, Field, fmt, Kpi, Loading, pct, Signed, usd, useAsync } from "../ui";
 
 export default function Structuring({ snap, nPaths, seed }: Ctx) {
   const i = snap.inputs;
@@ -27,8 +27,6 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
   return (
     <>
       <h1>③ 구조화상품 설계 · 평가</h1>
-      <Explain read={["이론가 = 경로별 상환금액 현재가치의 평균. 표준오차는 시뮬레이션 오차", "상환 비율은 위험중립 측도 기준이며 실제 발생 확률과 상이", "발행자(매도) 포지션의 가치·Greeks는 투자자와 반대 부호"]}
-        missing="변동성 스마일, 점프, 연속 관측 낙인, 발행 후 재평가, 발행자 신용위험" />
       <div className="grid g2">
         <Card title="계약 조건 (Term Sheet)">
           <div className="form">
@@ -40,9 +38,8 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
             <Field label="쿠폰 (연 %)" value={f.coupon} step={0.5} onChange={(v) => set("coupon", v)} />
             <Field label="수량 (매도 -)" value={f.qty} onChange={(v) => set("qty", v)} />
           </div>
-          <p className="note">기초자산 SPY·QQQ (Worst-of) · 액면 $1,000 · 만기 2년 · 원금 비보장 · 배리어는 기준가 대비 비율</p>
         </Card>
-        <Card title="모형 입력" right={<Badge label={edited ? "MANUAL SCENARIO" : snap.mode} />}>
+        <Card title="모형 입력">
           <div className="form">
             <Field label="SPY 현물가" value={f.s1} onChange={(v) => set("s1", v)} /><Field label="QQQ 현물가" value={f.s2} onChange={(v) => set("s2", v)} />
             <Field label="SPY 변동성 %" value={f.v1} onChange={(v) => set("v1", v)} /><Field label="QQQ 변동성 %" value={f.v2} onChange={(v) => set("v2", v)} />
@@ -59,16 +56,15 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
       </div>
       {tab === "design" && <>
         <div className="grid g2">
-          <Card title="상환 조건 (W: 두 기초자산의 기준가 대비 비율 중 최솟값)">
+          <Card title="상환 조건 (W = 기준가 대비 비율의 최솟값)">
             <div className="flow">
               {[["6개월", f.b1, 0.5], ["12개월", f.b2, 1.0], ["18개월", f.b3, 1.5]].map(([n, b, t]: any, k) => <div key={k}><b>{k + 1}</b>{n} 관측일 W ≥ {b}%: {usd(1000 * (1 + c * t), 0)} 조기상환</div>)}
               <div><b>4</b>만기 W ≥ {f.mb}%: {usd(1000 * (1 + c * 2), 0)} 상환</div>
               <div><b>5</b>만기 W &lt; {f.mb}%, 낙인 미발생: {usd(1000 * (1 + c * 2), 0)} 상환</div>
               <div><b>6</b>만기 W &lt; {f.mb}%, 낙인 발생(기간 중 W ≤ {f.ki}%): $1,000 × W 상환</div>
             </div>
-            <p className="note">쿠폰은 연 {f.coupon}% 단리, 상환 시 일괄 지급. 낙인은 일별 종가 관측.</p>
           </Card>
-          <Card title="예시 경로별 상환금액" right={<Badge label="MANUAL SCENARIO" />}>
+          <Card title="예시 경로별 상환금액">
             <Err e={ex.error} />{ex.loading && <Loading />}
             {ex.data && <table><thead><tr><th>경로</th><th>상환금액</th><th>액면 대비</th><th>상환 시점</th><th className="l">낙인</th></tr></thead><tbody>
               {ex.data.examples.map((e: any) => <tr key={e.id}><td>{e.name}</td><td>{usd(e.result.amount)}</td><td><Signed v={e.result.pnl_vs_notional} /></td><td>{e.result.redeem_time}년</td><td className="l">{e.result.knocked_in ? "발생" : "미발생"}</td></tr>)}
@@ -80,19 +76,17 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
               <ReferenceLine y={f.mb / 100} stroke="var(--mut)" strokeDasharray="4 3" />
               {ex.data.examples.map((e: any, k: number) => <Line key={e.id} data={e.result.path} name={e.name} dataKey="ratio1" stroke={`var(--chart${k + 1})`} dot={false} isAnimationActive={false} />)}
             </LineChart></ResponsiveContainer>}
-            <p className="note">세로축: W (%)</p>
           </Card>
         </div>
       </>}
       {tab === "price" && <>
         <Err e={pr.error} />{pr.loading && <Loading text="Monte Carlo 계산 중" />}
-        {!p && !pr.loading && !pr.error && <p className="note">Monte Carlo 평가 실행 전</p>}
         {p && <>
           <div className="grid g4">
-            <Kpi label="이론가 (투자자, 1개)" badge="MODEL ESTIMATE" value={usd(p.investor.price_per_note)} sub={`표준오차 ${fmt(p.investor.std_error)} · 95% 신뢰구간 ${fmt(p.investor.ci95[0])} ~ ${fmt(p.investor.ci95[1])}`} />
-            <Kpi label="발행가 - 이론가" value={<Signed v={p.issuer_margin_per_note} />} sub="헤지·조달 비용 미반영" />
+            <Kpi label="이론가 (투자자, 1개)" value={usd(p.investor.price_per_note)} sub={`표준오차 ${fmt(p.investor.std_error)}`} />
+            <Kpi label="발행가 - 이론가" value={<Signed v={p.issuer_margin_per_note} />} />
             <Kpi label={`발행자 포지션 (${f.qty}개)`} value={<Signed v={p.issuer_position.mtm} />} />
-            <Kpi label="만기 손실 상환 비율" value={pct(p.distribution.loss_rate, 1)} sub={`낙인 경험 ${pct(p.distribution.knock_in_rate, 1)} · 평균 상환 ${fmt(p.distribution.avg_redeem_time)}년`} />
+            <Kpi label="만기 손실 상환 비율" value={pct(p.distribution.loss_rate, 1)} sub={`낙인 발생 ${pct(p.distribution.knock_in_rate, 1)}`} />
           </div>
           <div className="grid g2">
             <Card title="상환 유형별 경로 비율 (위험중립 측도)">
@@ -100,7 +94,6 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
                 <XAxis type="number" {...axis} tickFormatter={(v) => v + "%"} /><YAxis type="category" dataKey="name" {...axis} width={110} />
                 <Tooltip {...chartTip} formatter={(v: any) => fmt(v, 1) + "%"} /><Bar dataKey="pct" name="비율" fill="var(--chart1)" isAnimationActive={false} />
               </BarChart></ResponsiveContainer>
-              <p className="note">표본 최저 상환금액 {usd(p.distribution.min_payoff_in_sample)}</p>
             </Card>
             <Card title="표본 경로 25개의 W (%)">
               <ResponsiveContainer width="100%" height={230}><LineChart data={paths}><CartesianGrid stroke="var(--line)" vertical={false} />
@@ -109,20 +102,17 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
                 {[0.5, 1, 1.5].map((t) => <ReferenceLine key={t} x={t} stroke="var(--line)" />)}
                 {Array.from({ length: 25 }, (_, j) => <Line key={j} dataKey={"p" + j} stroke="var(--chart1)" strokeOpacity={0.35} dot={false} strokeWidth={1} isAnimationActive={false} />)}
               </LineChart></ResponsiveContainer>
-              <p className="note">적색 점선: 낙인 배리어 · 회색 점선: 만기 상환 배리어 · 세로선: 조기상환 관측일</p>
             </Card>
           </div>
           <div className="grid g2">
-            <Card title="Greeks · 델타 헤지 수량" right={<Badge label="MODEL ESTIMATE" />}>
-              <table><thead><tr><th>지표</th><th>SPY</th><th>QQQ</th><th className="l">정의</th></tr></thead><tbody>
-                <tr><td>Delta (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.delta_1, 3)}</td><td>{fmt(p.greeks_investor_per_note.delta_2, 3)}</td><td className="wrap">기초자산 $1 상승 시 가치 변화</td></tr>
-                <tr><td>Gamma (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.gamma_1, 4)}</td><td>{fmt(p.greeks_investor_per_note.gamma_2, 4)}</td><td className="wrap">기초자산 $1 상승 시 Delta 변화</td></tr>
-                <tr><td>Vega (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.vega_1_per_1volpt)}</td><td>{fmt(p.greeks_investor_per_note.vega_2_per_1volpt)}</td><td className="wrap">변동성 +1%p 시 가치 변화</td></tr>
-                <tr><td>발행자 포지션 Delta</td><td><Signed v={p.issuer_position.delta_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.delta_shares["2"]} unit="주" /></td><td className="wrap">수량 {f.qty}개 기준, 주식 환산</td></tr>
-                <tr><td>델타 중립 헤지 수량</td><td><Signed v={p.issuer_position.hedge_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.hedge_shares["2"]} unit="주" /></td><td className="wrap">+ 매수, − 매도</td></tr>
+            <Card title="Greeks · 델타 헤지 수량">
+              <table><thead><tr><th>지표</th><th>SPY</th><th>QQQ</th></tr></thead><tbody>
+                <tr><td>Delta (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.delta_1, 3)}</td><td>{fmt(p.greeks_investor_per_note.delta_2, 3)}</td></tr>
+                <tr><td>Gamma (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.gamma_1, 4)}</td><td>{fmt(p.greeks_investor_per_note.gamma_2, 4)}</td></tr>
+                <tr><td>Vega (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.vega_1_per_1volpt)}</td><td>{fmt(p.greeks_investor_per_note.vega_2_per_1volpt)}</td></tr>
+                <tr><td>발행자 포지션 Delta</td><td><Signed v={p.issuer_position.delta_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.delta_shares["2"]} unit="주" /></td></tr>
+                <tr><td>델타 중립 헤지 수량 (+ 매수)</td><td><Signed v={p.issuer_position.hedge_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.hedge_shares["2"]} unit="주" /></td></tr>
               </tbody></table>
-              <p className="note">Rho (금리 +100bp, 투자자 1개) {fmt(p.greeks_investor_per_note.rho_per_100bp)} · Theta 미제공</p>
-              <p className="note">현물 충격 폭별 Delta: {p.bump_stability.map((b: any) => `${b.bump_pct}%: SPY ${fmt(b.delta_1, 3)}, QQQ ${fmt(b.delta_2, 3)}`).join(" · ")}</p>
             </Card>
             <Card title="시나리오 재평가 (투자자, 1개)">
               <table><thead><tr><th>조건</th><th>이론가</th><th>변화</th></tr></thead><tbody>
@@ -131,7 +121,6 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
                 <tr><td>상관계수 +0.10</td><td>{usd(p.corr_sensitivity.price_up)}</td><td><Signed v={p.corr_sensitivity.price_up - p.investor.price_per_note} /></td></tr>
                 <tr><td>상관계수 -0.10</td><td>{usd(p.corr_sensitivity.price_down)}</td><td><Signed v={p.corr_sensitivity.price_down - p.investor.price_per_note} /></td></tr>
               </tbody></table>
-              <p className="note">손실 상환 비율: 상관계수 +0.10 시 {pct(p.corr_sensitivity.loss_rate_up, 1)}, −0.10 시 {pct(p.corr_sensitivity.loss_rate_down, 1)}</p>
               <div className="row"><button className="b sec" onClick={() => cv.run(() => send("/structuring/convergence", { spec, market, seed }))} disabled={cv.loading}>경로 수별 수렴</button></div>
               {cv.loading && <Loading />}
               {cv.data && <ResponsiveContainer width="100%" height={170}><LineChart data={cv.data.rows.map((r: any) => ({ ...r, n: String(r.n_paths), err: 1.96 * r.std_error }))}><CartesianGrid stroke="var(--line)" vertical={false} />
@@ -144,7 +133,6 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
             <table><thead><tr><th>회차</th><th>관측일</th><th>쿠폰 연수</th><th>할인 연수 (Act/365)</th></tr></thead><tbody>
               {p.schedule.observation_dates.map((d: string, k: number) => <tr key={k}><td>{k < 3 ? `${k + 1}차 조기상환` : "만기"}</td><td>{d}</td><td>{p.schedule.coupon_year_fractions[k]}</td><td>{fmt(p.schedule.discount_year_fractions[k], 4)}</td></tr>)}
             </tbody></table>
-            <p className="note">경로 {p.n_paths.toLocaleString()}개 · 시드 {p.seed} · 대조변수법 적용 · 평가 기록 {p.valuation_id}{p.warnings[0]?.includes("Delta") ? " · " + p.warnings[0] : ""}</p>
           </Card>
         </>}
       </>}

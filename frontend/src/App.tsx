@@ -20,9 +20,7 @@ export default function App() {
   const [nPaths, setNPaths] = useState(20000);
   const [seed, setSeed] = useState(42);
   const [bookVer, setBookVer] = useState(0);
-  const [theme, setTheme] = useState("dark");
 
-  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
   useEffect(() => {
     // 첫 실행: 실제 자료를 시도하고 실패하면 캐시, 그다음 가상 자료 순으로 전환한다.
     send("/market/refresh", { mode: "auto" }).then((r) => setSnap(r.snapshot)).catch(() => get("/market/snapshot/active").then(setSnap).catch(setErr));
@@ -38,11 +36,8 @@ export default function App() {
           <span className="kv"><span>DATA MODE</span><Badge label={snap.mode} /></span>
           <span className="kv"><span>기준일</span>{snap.as_of} 종가</span>
           <span className="kv"><span>출처</span>{q?.source}</span>
-          <span className="kv"><span>평가 모형</span>BSM · Monte Carlo GBM</span>
         </>}
-        <button className="b sec" style={{ marginLeft: "auto", padding: "3px 8px" }} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "밝은 화면" : "어두운 화면"}</button>
       </div>
-      <div className="banner">교육용. 가상 계약 기준의 모형 추정값이며 실제 호가·주문 기능 없음.</div>
       <nav className="side">
         {PAGES.map(([k, n]) => <button key={k} className={page === k ? "on" : ""} onClick={() => setPage(k)}>{n}</button>)}
         <div className="set">

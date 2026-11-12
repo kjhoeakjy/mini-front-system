@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { send } from "../api";
 import type { Ctx } from "../App";
-import { axis, Badge, Card, chartTip, Err, Explain, Field, fmt, Loading, Signed, usd, useAsync } from "../ui";
+import { axis, Badge, Card, chartTip, Err, Field, fmt, Loading, Signed, usd, useAsync } from "../ui";
 
 export default function Stress({ snap, nPaths, seed, bookVer }: Ctx) {
   const st = useAsync(), hm = useAsync(), cu = useAsync();
@@ -22,23 +22,20 @@ export default function Stress({ snap, nPaths, seed, bookVer }: Ctx) {
   return (
     <>
       <h1>⑥ 스트레스 테스트</h1>
-      <Explain read={["시나리오 손익 = 충격 후 평가금액 − 기준 평가금액", "근사 오차는 비선형성의 크기", "행 선택 시 포지션별 기여 표시"]}
-        missing="VaR 등 확률 기반 지표, 주가와 변동성의 연동, 충격 시 유동성 악화" />
       <Err e={st.error} />{st.loading && <Loading text="시나리오 재평가 중" />}
       {s && <>
-        <Card title="기본 시나리오" right={<Badge label="MODEL ESTIMATE" />}>
+        <Card title="기본 시나리오">
           <div className="tw"><table>
             <thead><tr><th>시나리오</th><th>재평가 손익</th><th>Delta 근사</th><th>Delta + Gamma 근사</th><th>Greeks 근사</th><th>근사 오차</th><th>기준 평가금액</th><th>충격 후 평가금액</th></tr></thead>
             <tbody>{s.scenarios.map((x: any) => <Row key={x.id} x={x} pos={s.positions} />)}</tbody>
           </table></div>
-          <p className="note">Monte Carlo 95% 오차 한계 ±{usd(s.mc_noise_95)} (평가금액 기준). 상관계수는 Greeks 근사 대상에서 제외.</p>
           <ResponsiveContainer width="100%" height={240}><BarChart data={s.scenarios.map((x: any) => ({ name: x.name, 재평가: x.pnl_full_reprice, "Delta 근사": x.approx.delta_only }))}><CartesianGrid stroke="var(--line)" vertical={false} />
             <XAxis dataKey="name" {...axis} interval={0} tick={{ fontSize: 10 }} /><YAxis {...axis} width={60} tickFormatter={(v) => fmt(v, 0)} /><ReferenceLine y={0} stroke="var(--mut)" />
             <Tooltip {...chartTip} formatter={(v: any) => usd(v)} /><Legend /><Bar dataKey="재평가" fill="var(--chart1)" isAnimationActive={false} /><Bar dataKey="Delta 근사" fill="var(--chart2)" isAnimationActive={false} />
           </BarChart></ResponsiveContainer>
         </Card>
         <div className="grid g2" style={{ marginTop: 12 }}>
-          <Card title="사용자 정의 시나리오" right={<Badge label="MANUAL SCENARIO" />}>
+          <Card title="사용자 정의 시나리오">
             <div className="form">
               <Field label="SPY 현물 %" value={c.spy} onChange={(v) => setC({ ...c, spy: v })} /><Field label="QQQ 현물 %" value={c.qqq} onChange={(v) => setC({ ...c, qqq: v })} />
               <Field label="변동성 %p" value={c.vol} onChange={(v) => setC({ ...c, vol: v })} /><Field label="금리 bp" value={c.rate} onChange={(v) => setC({ ...c, rate: v })} />
@@ -49,13 +46,12 @@ export default function Stress({ snap, nPaths, seed, bookVer }: Ctx) {
             {cu.data && <div className="tw"><table><thead><tr><th>시나리오</th><th>재평가 손익</th><th>Delta 근사</th><th>Delta + Gamma 근사</th><th>Greeks 근사</th><th>근사 오차</th><th>기준 평가금액</th><th>충격 후 평가금액</th></tr></thead>
               <tbody>{cu.data.scenarios.map((x: any) => <Row key={x.id} x={x} pos={cu.data.positions} />)}</tbody></table></div>}
           </Card>
-          <Card title="SPY·QQQ 현물 충격별 노트 이론가 변화 (투자자, 1개, USD)" right={<button className="b sec" onClick={() => hm.run(() => send("/risk/heatmap", { snapshot_id: snap.snapshot_id, seed }))} disabled={hm.loading}>산출</button>}>
+          <Card title="현물 충격별 노트 이론가 변화 (USD)" right={<button className="b sec" onClick={() => hm.run(() => send("/risk/heatmap", { snapshot_id: snap.snapshot_id, seed }))} disabled={hm.loading}>산출</button>}>
             {hm.loading && <Loading />}<Err e={hm.error} />
             {hm.data?.available && <>
               <table className="heat"><thead><tr><th>QQQ \ SPY</th>{hm.data.shocks_pct.map((x: number) => <th key={x} style={{ textAlign: "center" }}>{x > 0 ? "+" : ""}{x}%</th>)}</tr></thead>
                 <tbody>{hm.data.change.map((row: number[], i2: number) => <tr key={i2}><td>{hm.data.shocks_pct[i2] > 0 ? "+" : ""}{hm.data.shocks_pct[i2]}%</td>
                   {row.map((v, j) => <td key={j} style={{ background: `color-mix(in srgb, ${v >= 0 ? "var(--pos)" : "var(--neg)"} ${Math.round(Math.min(1, Math.abs(v) / mx) * 45)}%, transparent)` }}>{v > 0 ? "+" : ""}{fmt(v, 0)}</td>)}</tr>)}</tbody></table>
-              <p className="note">기준 이론가 {usd(hm.data.base_price)} (표준오차 {fmt(hm.data.std_error)}, 경로 {hm.data.n_paths.toLocaleString()}개). 발행자 손익은 반대 부호.</p>
             </>}
             {hm.data && !hm.data.available && <p className="note warn">{hm.data.reason}</p>}
           </Card>

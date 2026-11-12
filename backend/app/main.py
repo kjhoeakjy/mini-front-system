@@ -1,4 +1,4 @@
-"""Mini S&T Front Office API. 교육용 로컬 프로그램이며 실제 주문 기능은 없다."""
+"""Mini S&T Front Office API. 실제 주문 기능은 없다."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,7 +32,7 @@ v1 = APIRouter(prefix="/api/v1")
 
 @v1.get("/health")
 def health():
-    return {"status": "ok", "version": VERSION, "trading": "disabled", "purpose": "교육용. 실제 주문 기능 없음"}
+    return {"status": "ok", "version": VERSION, "trading": "disabled", "purpose": "실제 주문 기능 없음"}
 
 
 for r in (market.router, pricing.router, structuring.router, portfolio.router, hedge.router, stress.router):

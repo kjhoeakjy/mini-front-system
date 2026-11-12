@@ -1,11 +1,11 @@
 # Mini S&T Front Office
 
-금융공학 기반 프런트 시스템의 작동 원리를 확인하기 위한 학습용 축소판이다.
+금융공학 기반 S&T 프런트 시스템이다.
 시장 자료 수집, 옵션 가격 평가, Greeks, 조기상환형 노트(ELS 유사) 설계와 Monte Carlo 평가, 장부 위험 집계, 델타 헤지, 스트레스 테스트를 하나의 흐름으로 연결한다.
 
-- 교육용이며 투자 권유, 실제 호가, 주문 시스템이 아니다. 주문·계좌 연동 기능은 없다.
+- 주문·계좌 연동 기능은 없다. 헤지 거래는 가상 체결로 처리한다.
 - 모든 계약은 가상 계약이다. 특정 증권사의 내부 시스템이나 판매 상품을 재현한 것이 아니다.
-- 화면의 모든 입력과 결과에는 `REAL MARKET DATA`, `CACHED REAL SNAPSHOT`, `MANUAL SCENARIO`, `SYNTHETIC DEMO`, `MODEL ESTIMATE` 중 하나가 표기된다.
+- 자료 구분(`REAL MARKET DATA`, `CACHED REAL SNAPSHOT`, `MANUAL SCENARIO`, `SYNTHETIC DEMO`)은 화면 상단에 표기된다.
 
 ## 화면 구성
 
@@ -80,7 +80,7 @@ backend/app/api         FastAPI 경로 (/api/v1/...)
 backend/app/storage     SQLite (스냅샷, 상품, 포지션, 평가 기록, 가상 거래)
 backend/tests           단위·API 테스트
 frontend/src            React + TypeScript 화면
-docs                    개념 정리, 모형 가정, 자료 출처, 검증 보고서, 시연 동선
+docs                    모형 가정, 자료 출처, 검증 보고서
 ```
 
 자료 공급자를 바꾸어도 계산 모듈은 수정하지 않도록 분리했다. 계산 모듈은 API 입력만으로도 동작한다(`POST /api/v1/pricing/european`, `POST /api/v1/structuring/price`). API 목록은 서버 실행 후 http://127.0.0.1:8000/docs 에서 확인한다.

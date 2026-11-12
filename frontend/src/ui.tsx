@@ -88,5 +88,5 @@ export const CAT_KR: Record<string, string> = {
   AUTOCALL_1: "1차 조기상환", AUTOCALL_2: "2차 조기상환", AUTOCALL_3: "3차 조기상환", AUTOCALL_4: "4차 조기상환", AUTOCALL_5: "5차 조기상환",
   MATURITY_ABOVE_BARRIER: "만기 상환(배리어 이상)", MATURITY_NO_KNOCK_IN: "만기 상환(낙인 미발생)", MATURITY_LOSS: "만기 손실 상환",
 };
-export const chartTip = { contentStyle: { background: "var(--panel2)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 12 }, labelStyle: { color: "var(--mut)" } };
+export const chartTip = { contentStyle: { background: "var(--panel2)", border: "1px solid var(--line)", borderRadius: 0, fontSize: 12 }, labelStyle: { color: "var(--mut)" } };
 export const axis = { stroke: "var(--mut)", fontSize: 11, tickLine: false };

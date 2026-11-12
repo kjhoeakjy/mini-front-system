@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { send } from "../api";
 import type { Ctx } from "../App";
-import { axis, Badge, Card, chartTip, Err, Explain, Field, fmt, Kpi, Loading, Signed, usd, useAsync, useDebounced } from "../ui";
+import { axis, Badge, Card, chartTip, Err, Field, fmt, Kpi, Loading, Signed, usd, useAsync, useDebounced } from "../ui";
 
 const GREEKS: [string, string][] = [["delta_shares", "Delta"], ["gamma_per_usd", "Gamma"], ["vega_per_1volpt_usd", "Vega"], ["theta_per_calendar_day_usd", "Theta"], ["rho_per_100bp_usd", "Rho"]];
 
@@ -30,10 +30,8 @@ export default function OptionLab({ snap }: Ctx) {
   return (
     <>
       <h1>② 옵션 가격결정</h1>
-      <Explain read={["포지션 Greeks = 주당 값 × 승수 100 × 부호 있는 계약 수", "Delta −55주는 주식 55주 매도와 동일한 노출"]}
-        missing="미국형 조기 행사, 변동성 스마일, 이산 배당" />
       <div className="grid g2">
-        <Card title="계약 조건 · 시장 입력" right={<Badge label={edited ? "MANUAL SCENARIO" : snap.mode} />}>
+        <Card title="계약 조건 · 시장 입력">
           <div className="form">
             <label>기초자산<select value={f.underlying} onChange={(e) => { setF(init(e.target.value)); setEdited(false); }}><option>SPY</option><option>QQQ</option></select></label>
             <label>옵션 종류<select value={f.option_type} onChange={(e) => set("option_type", e.target.value)}><option value="CALL">콜 CALL</option><option value="PUT">풋 PUT</option></select></label>
@@ -52,22 +50,20 @@ export default function OptionLab({ snap }: Ctx) {
             <button className="b sec" onClick={() => set("vol", f.vol + 5)}>변동성 +5%p</button>
             <button className="b sec" onClick={() => { setF(init(f.underlying)); setEdited(false); }}>초기화</button>
           </div>
-          <p className="note">승수 100주/계약</p>
         </Card>
         <div>
           <Err e={res.error} />{res.loading && <Loading />}
           {r && <>
             <div className="grid g3" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
-              <Kpi label="이론가 (주당)" badge="MODEL ESTIMATE" value={usd(r.model_price_per_share_usd, 4)} sub="BSM, 유럽형" />
+              <Kpi label="이론가 (주당)" value={usd(r.model_price_per_share_usd, 4)} />
               <Kpi label="이론가 (계약당)" value={usd(r.model_price_per_contract_usd)} />
               <Kpi label="포지션 평가금액" value={<Signed v={r.signed_position_mtm_usd} />} />
             </div>
-            <Card title="포지션 Greeks" right={<Badge label="MODEL ESTIMATE" />}>
-              <table><thead><tr><th>지표</th><th>값</th><th className="l">정의</th></tr></thead><tbody>
+            <Card title="포지션 Greeks">
+              <table><thead><tr><th>지표</th><th>값</th><th className="l">기준</th></tr></thead><tbody>
                 {GREEKS.map(([k, n]) => <tr key={k}><td>{n}</td>
                   <td><Signed v={g[k]} d={k === "gamma_per_usd" ? 4 : 2} unit={k === "delta_shares" ? "주" : k === "gamma_per_usd" ? "" : "$"} /></td><td className="wrap">{r.units[k]}</td></tr>)}
               </tbody></table>
-              <p className="note">델타 중립 헤지 수량: 주식 {fmt(Math.abs(r.hedge_shares_for_delta_neutral), 1)}주 {r.hedge_shares_for_delta_neutral > 0 ? "매수" : "매도"}</p>
             </Card>
           </>}
         </div>
@@ -114,7 +110,6 @@ export default function OptionLab({ snap }: Ctx) {
           </LineChart></ResponsiveContainer>
         </Card>
       </div>}
-      {r && <p className="note">가상 장외 유럽형 현금결제 계약 기준 · 평가 기록 {r.valuation_id}</p>}
     </>
   );
 }

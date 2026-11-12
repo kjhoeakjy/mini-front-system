@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { send } from "../api";
 import type { Ctx } from "../App";
-import { Badge, Card, Err, Explain, fmt, Kpi, Loading, Signed, UND, usd, useAsync } from "../ui";
+import { Badge, Card, Err, fmt, Kpi, Loading, Signed, UND, usd, useAsync } from "../ui";
 
 export default function Portfolio({ snap, nPaths, seed, bookVer, bumpBook }: Ctx) {
   const risk = useAsync();
@@ -13,17 +13,15 @@ export default function Portfolio({ snap, nPaths, seed, bookVer, bumpBook }: Ctx
   return (
     <>
       <h1>④ 포트폴리오 위험</h1>
-      <Explain read={["수량 부호: 매수 +, 매도 −", "평가금액은 현재 모형 가치이며 손익과 상이", "Delta는 기초자산별 주식 환산 수량으로 별도 집계"]}
-        missing="환율, 신용, 유동성, 교차 감마" />
       <Err e={err} /><Err e={risk.error} />{risk.loading && <Loading text="포트폴리오 평가 중" />}
       {r && <>
         <div className="grid g4">
-          <Kpi label="포트폴리오 평가금액" badge="MODEL ESTIMATE" value={<Signed v={t.mtm} />} />
+          <Kpi label="포트폴리오 평가금액" value={<Signed v={t.mtm} />} />
           {UND.map((u) => <Kpi key={u} label={`${u} 순 Delta`} value={<Signed v={t.delta[u]} unit="주" />} sub={<>달러 Delta <Signed v={t.dollar_delta[u]} d={0} /></>} />)}
           {UND.map((u) => <Kpi key={u + "v"} label={`${u} Vega`} value={<Signed v={t.vega[u]} />} sub="변동성 +1%p" />)}
           <Kpi label="Theta (노트 제외)" value={<Signed v={t.theta_partial} />} sub="1일 경과" />
         </div>
-        <Card title="포지션별 평가금액 · 민감도" right={<Badge label={r.data.mode} />}>
+        <Card title="포지션별 평가금액 · 민감도">
           <div className="tw"><table>
             <thead><tr><th>상품</th><th>수량</th><th>단위 이론가</th><th>평가금액</th><th>SPY Delta</th><th>QQQ Delta</th><th>SPY Vega</th><th>QQQ Vega</th><th>Theta/일</th><th>Rho</th><th className="l">모형</th></tr></thead>
             <tbody>
@@ -38,20 +36,12 @@ export default function Portfolio({ snap, nPaths, seed, bookVer, bumpBook }: Ctx
                 <td><Signed v={t.vega.SPY} /></td><td><Signed v={t.vega.QQQ} /></td><td><Signed v={t.theta_partial} /> <span className="mut">(노트 제외)</span></td><td><Signed v={t.rho} /></td><td></td></tr>
             </tbody>
           </table></div>
-          <p className="note">수량 수정 후 Enter 입력 시 재평가. Delta: 주식 환산 수량, Vega: 변동성 +1%p, Rho: 금리 +100bp 기준.</p>
         </Card>
         <div className="grid g2" style={{ marginTop: 12 }}>
           <Card title="기초자산 +1% 손익 근사 (단독 충격)">
             <table><thead><tr><th>기초자산</th><th>현물가</th><th>Gamma</th><th>Delta 근사</th><th>Delta + Gamma 근사</th></tr></thead><tbody>
               {UND.map((u) => <tr key={u}><td>{u}</td><td>{usd(r.spots[u])}</td><td>{fmt(t.gamma[u], 3)}</td><td><Signed v={t.one_pct_move[u].delta_only} /></td><td><Signed v={t.one_pct_move[u].delta_gamma} /></td></tr>)}
             </tbody></table>
-          </Card>
-          <Card title="평가 조건">
-            <ul className="note" style={{ marginTop: 0 }}>
-              <li>미측정 위험: {r.unmeasured_risks.join(", ")}</li>
-              <li>노트 평가금액 표준오차 {usd(r.rows.find((x: any) => x.model === "MC-GBM")?.detail.mtm_std_error)} (경로 {r.n_paths.toLocaleString()}개, 시드 {r.seed})</li>
-              <li>평가 기록 {r.valuation_id}</li>
-            </ul>
           </Card>
         </div>
       </>}

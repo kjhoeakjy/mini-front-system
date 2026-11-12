@@ -42,9 +42,9 @@ SPY 유럽형 콜옵션 1계약 매도(가상 장외 계약) 한 건을 가격�
 
 고급 모드 기본 장부: SPY 콜 1계약 매도(90일), QQQ 풋 1계약 매수(180일), 스텝다운 노트 10개 매도, 현물 0주.
 
-## 웹 실행 (GitHub Pages)
+## 웹 실행
 
-https://kjhoeakjy.github.io/mini-front-system/
+https://kw123.pages.dev (Cloudflare Pages, `dist` 브랜치) · https://kjhoeakjy.github.io/mini-front-system/ (GitHub Pages)
 
 서버 없이 브라우저에서 동작한다. 동일한 Python 계산 코드(`backend/app`)를 Pyodide(WebAssembly)로 실행하며, 화면은 API 호출을 Web Worker 내부의 FastAPI 앱에 전달한다. 최초 접속 시 실행 환경 로딩에 수 초가 소요된다.
 

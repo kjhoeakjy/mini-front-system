@@ -24,8 +24,8 @@
 |---|---|
 | `cd backend && python -m pytest -q` | 131건 통과 (기존 123건 + 신규 8건) |
 | `cd frontend && npx tsc --noEmit && npm run build` | 성공 |
-| `node scripts/smoke_e2e.cjs` (FastAPI 서버) | 12개 확인 항목 통과, 브라우저 오류 없음 |
-| `bash scripts/build_pages.sh` 후 `STATIC=1 node scripts/smoke_e2e.cjs` (Pyodide 정적 빌드) | 11개 확인 항목 통과(서버 API 대조 1건 제외), 브라우저 오류 없음 |
+| `node scripts/smoke_e2e.cjs` (FastAPI 서버) | 11개 확인 항목 통과, 브라우저 오류 없음 |
+| `bash scripts/build_pages.sh` 후 `STATIC=1 node scripts/smoke_e2e.cjs` (Pyodide 정적 빌드) | 10개 확인 항목 통과(서버 API 대조 1건 제외), 브라우저 오류 없음 |
 
 ## 기준 시나리오 기준값 (S = K = 100, T = 1, r = 5%, q = 0, σ = 20%)
 

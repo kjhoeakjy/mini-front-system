@@ -26,55 +26,52 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
 
   return (
     <>
-      <h1>③ 구조화 Structuring Studio</h1>
-      <p className="sub">SPY·QQQ 중 더 부진한 쪽에 연동되는 조기상환형 노트(ELS 유사, 가상 계약)의 지급 규칙 설계와 Monte Carlo 평가</p>
-      <Explain goal={["지급 규칙(payoff)이 계약의 핵심임을 확인", "경로에 따라 결과가 달라지는 상품을 시뮬레이션으로 평가하는 이유 이해", "투자자 가치와 발행자(매도) 포지션의 부호가 반대임을 확인"]}
-        read={["이론가 = 경로별 지급액을 할인한 값의 평균. 표준오차는 시뮬레이션 잡음의 크기", "상환 분포는 위험중립 모형 아래의 경로 빈도이며 실제 발생 확률이 아님", "발행가 $1,000과 이론가의 차이는 발행자 몫이나 헤지·조달 비용은 미반영"]}
-        missing={["변동성 스마일, 변동성·상관계수의 시간 변화, 가격 점프", "연속 관측 낙인(여기서는 일별 종가 관측)", "발행 후 경과한 상품의 재평가(낙인·관측 이력 필요)", "발행자 신용위험"]}
-        interview="구조화는 지급 조건을 설계하는 일입니다. 이 예시는 두 ETF 중 성과가 낮은 쪽을 기준으로 조기상환과 만기 상환액이 정해집니다. 지급액이 경로에 따라 달라져 공식 하나로 계산하기 어렵기 때문에, 많은 경로를 만들어 경로마다 지급액을 계산하고 할인해 평균하는 방식으로 평가했습니다." />
+      <h1>③ 구조화상품 설계 · 평가</h1>
+      <Explain read={["이론가 = 경로별 상환금액 현재가치의 평균. 표준오차는 시뮬레이션 오차", "상환 비율은 위험중립 측도 기준이며 실제 발생 확률과 상이", "발행자(매도) 포지션의 가치·Greeks는 투자자와 반대 부호"]}
+        missing="변동성 스마일, 점프, 연속 관측 낙인, 발행 후 재평가, 발행자 신용위험" />
       <div className="grid g2">
-        <Card title="계약 조건 (Term Sheet)" right={<Badge label="MANUAL SCENARIO" />}>
+        <Card title="계약 조건 (Term Sheet)">
           <div className="form">
-            <Field label="6개월 조기상환 배리어 %" value={f.b1} onChange={(v) => set("b1", v)} />
-            <Field label="12개월 배리어 %" value={f.b2} onChange={(v) => set("b2", v)} />
-            <Field label="18개월 배리어 %" value={f.b3} onChange={(v) => set("b3", v)} />
-            <Field label="만기 배리어 %" value={f.mb} onChange={(v) => set("mb", v)} />
+            <Field label="6개월 상환 배리어 %" value={f.b1} onChange={(v) => set("b1", v)} />
+            <Field label="12개월 상환 배리어 %" value={f.b2} onChange={(v) => set("b2", v)} />
+            <Field label="18개월 상환 배리어 %" value={f.b3} onChange={(v) => set("b3", v)} />
+            <Field label="만기 상환 배리어 %" value={f.mb} onChange={(v) => set("mb", v)} />
             <Field label="낙인 배리어 %" value={f.ki} onChange={(v) => set("ki", v)} />
-            <Field label="쿠폰 연 %" value={f.coupon} step={0.5} onChange={(v) => set("coupon", v)} />
+            <Field label="쿠폰 (연 %)" value={f.coupon} step={0.5} onChange={(v) => set("coupon", v)} />
             <Field label="수량 (매도 -)" value={f.qty} onChange={(v) => set("qty", v)} />
           </div>
-          <p className="note">원금 $1,000 · 만기 2년 · 기준가는 평가 기준일 현물가 · 원금 비보장. 배리어는 기준가 대비 비율.</p>
+          <p className="note">기초자산 SPY·QQQ (Worst-of) · 액면 $1,000 · 만기 2년 · 원금 비보장 · 배리어는 기준가 대비 비율</p>
         </Card>
         <Card title="모형 입력" right={<Badge label={edited ? "MANUAL SCENARIO" : snap.mode} />}>
           <div className="form">
             <Field label="SPY 현물가" value={f.s1} onChange={(v) => set("s1", v)} /><Field label="QQQ 현물가" value={f.s2} onChange={(v) => set("s2", v)} />
             <Field label="SPY 변동성 %" value={f.v1} onChange={(v) => set("v1", v)} /><Field label="QQQ 변동성 %" value={f.v2} onChange={(v) => set("v2", v)} />
-            <Field label="SPY 배당률 %" value={f.q1} onChange={(v) => set("q1", v)} /><Field label="QQQ 배당률 %" value={f.q2} onChange={(v) => set("q2", v)} />
+            <Field label="SPY 배당수익률 %" value={f.q1} onChange={(v) => set("q1", v)} /><Field label="QQQ 배당수익률 %" value={f.q2} onChange={(v) => set("q2", v)} />
             <Field label="금리 %" value={f.r} step={0.1} onChange={(v) => set("r", v)} /><Field label="상관계수" value={f.rho} step={0.05} onChange={(v) => set("rho", v)} />
           </div>
-          <div className="row"><button className="b" onClick={price} disabled={pr.loading}>Monte Carlo 평가 실행 ({nPaths.toLocaleString()} 경로)</button>
-            <button className="b sec" onClick={() => { setF(init()); setEdited(false); }}>스냅샷 값으로 되돌리기</button></div>
+          <div className="row"><button className="b" onClick={price} disabled={pr.loading}>Monte Carlo 평가 ({nPaths.toLocaleString()} 경로)</button>
+            <button className="b sec" onClick={() => { setF(init()); setEdited(false); }}>초기화</button></div>
         </Card>
       </div>
       <div className="row" style={{ margin: "0 0 12px" }}>
-        <button className={"b " + (tab === "design" ? "" : "sec")} onClick={() => setTab("design")}>A. 지급 규칙</button>
-        <button className={"b " + (tab === "price" ? "" : "sec")} onClick={() => setTab("price")}>B. 평가와 위험</button>
+        <button className={"b " + (tab === "design" ? "" : "sec")} onClick={() => setTab("design")}>A. 손익구조</button>
+        <button className={"b " + (tab === "price" ? "" : "sec")} onClick={() => setTab("price")}>B. 평가 · 위험</button>
       </div>
       {tab === "design" && <>
         <div className="grid g2">
-          <Card title="지급 규칙 (W = 두 자산의 기준가 대비 비율 중 낮은 값)">
+          <Card title="상환 조건 (W: 두 기초자산의 기준가 대비 비율 중 최솟값)">
             <div className="flow">
-              {[["6개월", f.b1, 0.5], ["12개월", f.b2, 1.0], ["18개월", f.b3, 1.5]].map(([n, b, t]: any, k) => <div key={k}><b>{k + 1}</b>{n} 관측일에 W ≥ {b}% 이면 {usd(1000 * (1 + c * t), 0)} 지급 후 종료. 아니면 다음 단계</div>)}
-              <div><b>4</b>만기(24개월)에 W ≥ {f.mb}% 이면 {usd(1000 * (1 + c * 2), 0)} 지급</div>
-              <div><b>5</b>만기에 W &lt; {f.mb}% 이지만 기간 중 W가 {f.ki}% 이하로 내려간 적이 없으면 {usd(1000 * (1 + c * 2), 0)} 지급</div>
-              <div><b>6</b>기간 중 W가 {f.ki}% 이하로 내려간 적이 있고(낙인) 만기에 W &lt; {f.mb}% 이면 $1,000 × W 지급 (원금 손실)</div>
+              {[["6개월", f.b1, 0.5], ["12개월", f.b2, 1.0], ["18개월", f.b3, 1.5]].map(([n, b, t]: any, k) => <div key={k}><b>{k + 1}</b>{n} 관측일 W ≥ {b}%: {usd(1000 * (1 + c * t), 0)} 조기상환</div>)}
+              <div><b>4</b>만기 W ≥ {f.mb}%: {usd(1000 * (1 + c * 2), 0)} 상환</div>
+              <div><b>5</b>만기 W &lt; {f.mb}%, 낙인 미발생: {usd(1000 * (1 + c * 2), 0)} 상환</div>
+              <div><b>6</b>만기 W &lt; {f.mb}%, 낙인 발생(기간 중 W ≤ {f.ki}%): $1,000 × W 상환</div>
             </div>
-            <p className="note">쿠폰은 중간 지급 없이 상환 시점에 연 {f.coupon}% 단리로 한 번에 지급. 낙인은 매일 종가로 관측. 조기상환 이후의 가격은 영향을 주지 않음.</p>
+            <p className="note">쿠폰은 연 {f.coupon}% 단리, 상환 시 일괄 지급. 낙인은 일별 종가 관측.</p>
           </Card>
-          <Card title="예시 경로 4개 (지급 함수의 실제 계산 결과)" right={<Badge label="MANUAL SCENARIO" />}>
+          <Card title="예시 경로별 상환금액" right={<Badge label="MANUAL SCENARIO" />}>
             <Err e={ex.error} />{ex.loading && <Loading />}
-            {ex.data && <table><thead><tr><th>경로</th><th>지급액</th><th>원금 대비</th><th>상환 시점</th><th className="l">낙인</th></tr></thead><tbody>
-              {ex.data.examples.map((e: any) => <tr key={e.id}><td>{e.name}</td><td>{usd(e.result.amount)}</td><td><Signed v={e.result.pnl_vs_notional} /></td><td>{e.result.redeem_time}년</td><td className="l">{e.result.knocked_in ? "발생" : "없음"}</td></tr>)}
+            {ex.data && <table><thead><tr><th>경로</th><th>상환금액</th><th>액면 대비</th><th>상환 시점</th><th className="l">낙인</th></tr></thead><tbody>
+              {ex.data.examples.map((e: any) => <tr key={e.id}><td>{e.name}</td><td>{usd(e.result.amount)}</td><td><Signed v={e.result.pnl_vs_notional} /></td><td>{e.result.redeem_time}년</td><td className="l">{e.result.knocked_in ? "발생" : "미발생"}</td></tr>)}
             </tbody></table>}
             {ex.data && <ResponsiveContainer width="100%" height={200}><LineChart><CartesianGrid stroke="var(--line)" vertical={false} />
               <XAxis dataKey="t" type="number" domain={[0, 2]} {...axis} ticks={[0, 0.5, 1, 1.5, 2]} /><YAxis {...axis} width={40} domain={[0.4, 1.1]} tickFormatter={(v) => fmt(v * 100, 0)} />
@@ -83,59 +80,59 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
               <ReferenceLine y={f.mb / 100} stroke="var(--mut)" strokeDasharray="4 3" />
               {ex.data.examples.map((e: any, k: number) => <Line key={e.id} data={e.result.path} name={e.name} dataKey="ratio1" stroke={`var(--chart${k + 1})`} dot={false} isAnimationActive={false} />)}
             </LineChart></ResponsiveContainer>}
-            <p className="note">세로축은 W(%). 선은 설명용으로 그린 가상 경로이며 지급액은 계약 지급 함수가 계산함.</p>
+            <p className="note">세로축: W (%)</p>
           </Card>
         </div>
       </>}
       {tab === "price" && <>
         <Err e={pr.error} />{pr.loading && <Loading text="Monte Carlo 계산 중" />}
-        {!p && !pr.loading && !pr.error && <p className="note">위의 평가 실행 버튼을 누르면 결과가 표시됨.</p>}
+        {!p && !pr.loading && !pr.error && <p className="note">Monte Carlo 평가 실행 전</p>}
         {p && <>
           <div className="grid g4">
-            <Kpi label="이론가 (투자자, 1개)" badge="MODEL ESTIMATE" value={usd(p.investor.price_per_note)} sub={`표준오차 ${fmt(p.investor.std_error)} · 95% 구간 ${fmt(p.investor.ci95[0])} ~ ${fmt(p.investor.ci95[1])}`} />
-            <Kpi label="발행가 - 이론가" value={<Signed v={p.issuer_margin_per_note} />} sub="1개당. 헤지·조달 비용 미반영" />
-            <Kpi label={`발행자 포지션 (${f.qty}개)`} value={<Signed v={p.issuer_position.mtm} />} sub="매도 포지션은 투자자 가치의 반대 부호" />
+            <Kpi label="이론가 (투자자, 1개)" badge="MODEL ESTIMATE" value={usd(p.investor.price_per_note)} sub={`표준오차 ${fmt(p.investor.std_error)} · 95% 신뢰구간 ${fmt(p.investor.ci95[0])} ~ ${fmt(p.investor.ci95[1])}`} />
+            <Kpi label="발행가 - 이론가" value={<Signed v={p.issuer_margin_per_note} />} sub="헤지·조달 비용 미반영" />
+            <Kpi label={`발행자 포지션 (${f.qty}개)`} value={<Signed v={p.issuer_position.mtm} />} />
             <Kpi label="만기 손실 상환 비율" value={pct(p.distribution.loss_rate, 1)} sub={`낙인 경험 ${pct(p.distribution.knock_in_rate, 1)} · 평균 상환 ${fmt(p.distribution.avg_redeem_time)}년`} />
           </div>
           <div className="grid g2">
-            <Card title="상환 유형별 경로 비율 (위험중립 모형 기준)">
+            <Card title="상환 유형별 경로 비율 (위험중립 측도)">
               <ResponsiveContainer width="100%" height={230}><BarChart data={dist} layout="vertical" margin={{ left: 60 }}><CartesianGrid stroke="var(--line)" horizontal={false} />
                 <XAxis type="number" {...axis} tickFormatter={(v) => v + "%"} /><YAxis type="category" dataKey="name" {...axis} width={110} />
                 <Tooltip {...chartTip} formatter={(v: any) => fmt(v, 1) + "%"} /><Bar dataKey="pct" name="비율" fill="var(--chart1)" isAnimationActive={false} />
               </BarChart></ResponsiveContainer>
-              <p className="note">비율 합계 {fmt(p.distribution.fraction_sum * 100, 1)}%. 표본 내 최저 지급액 {usd(p.distribution.min_payoff_in_sample)}. {p.distribution.note}</p>
+              <p className="note">표본 최저 상환금액 {usd(p.distribution.min_payoff_in_sample)}</p>
             </Card>
-            <Card title="표본 경로 25개의 W 추이 (%)">
+            <Card title="표본 경로 25개의 W (%)">
               <ResponsiveContainer width="100%" height={230}><LineChart data={paths}><CartesianGrid stroke="var(--line)" vertical={false} />
                 <XAxis dataKey="t" type="number" domain={[0, 2]} ticks={[0, 0.5, 1, 1.5, 2]} {...axis} /><YAxis {...axis} width={40} domain={[30, 150]} allowDataOverflow />
                 <ReferenceLine y={f.ki} stroke="var(--neg)" strokeDasharray="4 3" /><ReferenceLine y={f.mb} stroke="var(--mut)" strokeDasharray="4 3" /><ReferenceLine y={100} stroke="var(--line)" />
                 {[0.5, 1, 1.5].map((t) => <ReferenceLine key={t} x={t} stroke="var(--line)" />)}
                 {Array.from({ length: 25 }, (_, j) => <Line key={j} dataKey={"p" + j} stroke="var(--chart1)" strokeOpacity={0.35} dot={false} strokeWidth={1} isAnimationActive={false} />)}
               </LineChart></ResponsiveContainer>
-              <p className="note">붉은 점선은 낙인 배리어, 회색 점선은 만기 배리어. 세로선은 조기상환 관측일.</p>
+              <p className="note">적색 점선: 낙인 배리어 · 회색 점선: 만기 상환 배리어 · 세로선: 조기상환 관측일</p>
             </Card>
           </div>
           <div className="grid g2">
-            <Card title="Greeks와 델타 헤지 수량" right={<Badge label="MODEL ESTIMATE" />}>
-              <table><thead><tr><th>지표</th><th>SPY</th><th>QQQ</th><th className="l">단위</th></tr></thead><tbody>
-                <tr><td>Delta (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.delta_1, 3)}</td><td>{fmt(p.greeks_investor_per_note.delta_2, 3)}</td><td className="wrap">기초자산 $1 상승 시 USD</td></tr>
-                <tr><td>Gamma (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.gamma_1, 4)}</td><td>{fmt(p.greeks_investor_per_note.gamma_2, 4)}</td><td className="wrap">$1 상승 시 Delta 변화. 잡음 큼</td></tr>
-                <tr><td>Vega (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.vega_1_per_1volpt)}</td><td>{fmt(p.greeks_investor_per_note.vega_2_per_1volpt)}</td><td className="wrap">변동성 +1%p 시 USD</td></tr>
-                <tr><td>발행자 포지션 Delta</td><td><Signed v={p.issuer_position.delta_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.delta_shares["2"]} unit="주" /></td><td className="wrap">수량 {f.qty}개 반영</td></tr>
-                <tr><td>델타 중립 헤지 수량</td><td><Signed v={p.issuer_position.hedge_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.hedge_shares["2"]} unit="주" /></td><td className="wrap">+ 매수, - 매도 (가상)</td></tr>
+            <Card title="Greeks · 델타 헤지 수량" right={<Badge label="MODEL ESTIMATE" />}>
+              <table><thead><tr><th>지표</th><th>SPY</th><th>QQQ</th><th className="l">정의</th></tr></thead><tbody>
+                <tr><td>Delta (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.delta_1, 3)}</td><td>{fmt(p.greeks_investor_per_note.delta_2, 3)}</td><td className="wrap">기초자산 $1 상승 시 가치 변화</td></tr>
+                <tr><td>Gamma (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.gamma_1, 4)}</td><td>{fmt(p.greeks_investor_per_note.gamma_2, 4)}</td><td className="wrap">기초자산 $1 상승 시 Delta 변화</td></tr>
+                <tr><td>Vega (투자자 1개)</td><td>{fmt(p.greeks_investor_per_note.vega_1_per_1volpt)}</td><td>{fmt(p.greeks_investor_per_note.vega_2_per_1volpt)}</td><td className="wrap">변동성 +1%p 시 가치 변화</td></tr>
+                <tr><td>발행자 포지션 Delta</td><td><Signed v={p.issuer_position.delta_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.delta_shares["2"]} unit="주" /></td><td className="wrap">수량 {f.qty}개 기준, 주식 환산</td></tr>
+                <tr><td>델타 중립 헤지 수량</td><td><Signed v={p.issuer_position.hedge_shares["1"]} unit="주" /></td><td><Signed v={p.issuer_position.hedge_shares["2"]} unit="주" /></td><td className="wrap">+ 매수, − 매도</td></tr>
               </tbody></table>
-              <p className="note">Rho(금리 +100bp, 투자자 1개): {fmt(p.greeks_investor_per_note.rho_per_100bp)} · Theta: N/A (발행 시점 평가 전용 범위)</p>
-              <p className="note">현물 충격 폭별 Delta 추정: {p.bump_stability.map((b: any) => `${b.bump_pct}% → SPY ${fmt(b.delta_1, 3)}, QQQ ${fmt(b.delta_2, 3)}`).join(" · ")}</p>
+              <p className="note">Rho (금리 +100bp, 투자자 1개) {fmt(p.greeks_investor_per_note.rho_per_100bp)} · Theta 미제공</p>
+              <p className="note">현물 충격 폭별 Delta: {p.bump_stability.map((b: any) => `${b.bump_pct}%: SPY ${fmt(b.delta_1, 3)}, QQQ ${fmt(b.delta_2, 3)}`).join(" · ")}</p>
             </Card>
-            <Card title="충격 재평가 (투자자 1개 기준)">
+            <Card title="시나리오 재평가 (투자자, 1개)">
               <table><thead><tr><th>조건</th><th>이론가</th><th>변화</th></tr></thead><tbody>
-                <tr><td>두 자산 -10%</td><td>{usd(p.spot_shock.down_10pct.price)}</td><td><Signed v={p.spot_shock.down_10pct.change} /></td></tr>
-                <tr><td>두 자산 +10%</td><td>{usd(p.spot_shock.up_10pct.price)}</td><td><Signed v={p.spot_shock.up_10pct.change} /></td></tr>
+                <tr><td>SPY·QQQ −10%</td><td>{usd(p.spot_shock.down_10pct.price)}</td><td><Signed v={p.spot_shock.down_10pct.change} /></td></tr>
+                <tr><td>SPY·QQQ +10%</td><td>{usd(p.spot_shock.up_10pct.price)}</td><td><Signed v={p.spot_shock.up_10pct.change} /></td></tr>
                 <tr><td>상관계수 +0.10</td><td>{usd(p.corr_sensitivity.price_up)}</td><td><Signed v={p.corr_sensitivity.price_up - p.investor.price_per_note} /></td></tr>
                 <tr><td>상관계수 -0.10</td><td>{usd(p.corr_sensitivity.price_down)}</td><td><Signed v={p.corr_sensitivity.price_down - p.investor.price_per_note} /></td></tr>
               </tbody></table>
-              <p className="note">기준가는 고정하고 현재 현물가를 이동. 같은 난수로 평가. 상관계수 변화 시 손실 상환 비율: +0.10 → {pct(p.corr_sensitivity.loss_rate_up, 1)}, -0.10 → {pct(p.corr_sensitivity.loss_rate_down, 1)}</p>
-              <div className="row"><button className="b sec" onClick={() => cv.run(() => send("/structuring/convergence", { spec, market, seed }))} disabled={cv.loading}>경로 수에 따른 수렴 확인</button></div>
+              <p className="note">손실 상환 비율: 상관계수 +0.10 시 {pct(p.corr_sensitivity.loss_rate_up, 1)}, −0.10 시 {pct(p.corr_sensitivity.loss_rate_down, 1)}</p>
+              <div className="row"><button className="b sec" onClick={() => cv.run(() => send("/structuring/convergence", { spec, market, seed }))} disabled={cv.loading}>경로 수별 수렴</button></div>
               {cv.loading && <Loading />}
               {cv.data && <ResponsiveContainer width="100%" height={170}><LineChart data={cv.data.rows.map((r: any) => ({ ...r, n: String(r.n_paths), err: 1.96 * r.std_error }))}><CartesianGrid stroke="var(--line)" vertical={false} />
                 <XAxis dataKey="n" {...axis} /><YAxis {...axis} width={50} domain={["auto", "auto"]} tickFormatter={(v) => fmt(v, 0)} />
@@ -143,11 +140,11 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
               </LineChart></ResponsiveContainer>}
             </Card>
           </div>
-          <Card title="관측 일정과 계산 조건">
-            <table><thead><tr><th>회차</th><th>관측일</th><th>쿠폰 계산 연수</th><th>할인 연수(실제 일수/365)</th></tr></thead><tbody>
+          <Card title="관측 일정">
+            <table><thead><tr><th>회차</th><th>관측일</th><th>쿠폰 연수</th><th>할인 연수 (Act/365)</th></tr></thead><tbody>
               {p.schedule.observation_dates.map((d: string, k: number) => <tr key={k}><td>{k < 3 ? `${k + 1}차 조기상환` : "만기"}</td><td>{d}</td><td>{p.schedule.coupon_year_fractions[k]}</td><td>{fmt(p.schedule.discount_year_fractions[k], 4)}</td></tr>)}
             </tbody></table>
-            <ul className="note"><li>{p.schedule.rule}</li><li>경로 {p.n_paths.toLocaleString()}개 · 시드 {p.seed} · 대조 변수 사용 · 모형 {p.model_version} · 평가 기록 {p.valuation_id}</li>{p.warnings.map((w: string, k: number) => <li key={k}>{w}</li>)}</ul>
+            <p className="note">경로 {p.n_paths.toLocaleString()}개 · 시드 {p.seed} · 대조변수법 적용 · 평가 기록 {p.valuation_id}{p.warnings[0]?.includes("Delta") ? " · " + p.warnings[0] : ""}</p>
           </Card>
         </>}
       </>}

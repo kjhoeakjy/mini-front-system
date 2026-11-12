@@ -48,20 +48,18 @@ export function Field({ label, value, onChange, step, type = "number" }: { label
   );
 }
 
-export function Explain({ goal, read, missing, interview }: { goal: string[]; read: string[]; missing: string[]; interview: string }) {
+export function Explain({ read, missing }: { read: string[]; missing: string }) {
   return (
     <details>
-      <summary>학습 목표 · 결과 읽는 법 · 모형에서 빠진 요소 · 면접 설명</summary>
-      <h3>학습 목표</h3><ul>{goal.map((t, i) => <li key={i}>{t}</li>)}</ul>
-      <h3>결과 읽는 법</h3><ul>{read.map((t, i) => <li key={i}>{t}</li>)}</ul>
-      <h3>이 모형에서 빠진 현실 요소</h3><ul>{missing.map((t, i) => <li key={i}>{t}</li>)}</ul>
-      <h3>면접에서의 설명</h3><p>{interview}</p>
+      <summary>해설</summary>
+      <h3>판독 기준</h3><ul>{read.map((t, i) => <li key={i}>{t}</li>)}</ul>
+      <h3>모형 제외 요소</h3><p>{missing}</p>
     </details>
   );
 }
 
 export function Err({ e }: { e: any }) {
-  return e ? <div className="err">오류: {String(e.message || e)}<br /><span className="mut">입력값을 확인하거나 시장 화면에서 스냅샷을 다시 불러온 뒤 재시도</span></div> : null;
+  return e ? <div className="err">오류: {String(e.message || e)}</div> : null;
 }
 export const Loading = ({ text = "계산 중" }: { text?: string }) => <div className="loading">{text}…</div>;
 
@@ -88,7 +86,7 @@ export function useDebounced<T>(value: T, ms = 250): T {
 
 export const CAT_KR: Record<string, string> = {
   AUTOCALL_1: "1차 조기상환", AUTOCALL_2: "2차 조기상환", AUTOCALL_3: "3차 조기상환", AUTOCALL_4: "4차 조기상환", AUTOCALL_5: "5차 조기상환",
-  MATURITY_ABOVE_BARRIER: "만기 상환(배리어 이상)", MATURITY_NO_KNOCK_IN: "만기 상환(낙인 없음)", MATURITY_LOSS: "만기 손실 상환",
+  MATURITY_ABOVE_BARRIER: "만기 상환(배리어 이상)", MATURITY_NO_KNOCK_IN: "만기 상환(낙인 미발생)", MATURITY_LOSS: "만기 손실 상환",
 };
 export const chartTip = { contentStyle: { background: "var(--panel2)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 12 }, labelStyle: { color: "var(--mut)" } };
 export const axis = { stroke: "var(--mut)", fontSize: 11, tickLine: false };

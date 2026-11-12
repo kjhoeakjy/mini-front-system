@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from ..domain.market import UNDERLYINGS
 from ..providers import market_yahoo, rates_fred
 from ..providers.base import ProviderError
-from ..providers.offline_fixture import load_fixture
+from ..providers.offline_fixture import load_bundled_real, load_fixture
 from ..storage.database import conn, new_id, now_utc
 
 REAL, CACHED, MANUAL, SYNTH, MODEL = "REAL MARKET DATA", "CACHED REAL SNAPSHOT", "MANUAL SCENARIO", "SYNTHETIC DEMO", "MODEL ESTIMATE"
@@ -140,7 +140,7 @@ def synthetic() -> dict:
 
 
 def refresh(mode: str = "auto") -> dict:
-    """mode: auto(실제 → 캐시 → 가상 순), real(실패 시 오류), synthetic."""
+    """mode: auto(실제, 캐시, 가상 순), real(실패 시 오류), synthetic."""
     if mode == "synthetic":
         return {"snapshot": synthetic(), "status": [{"step": "가상 자료", "ok": True, "message": "가상 스냅샷 생성"}]}
     status = []
@@ -161,6 +161,19 @@ def refresh(mode: str = "auto") -> dict:
                     if snap["inputs"][sec][u]["label"] == REAL:
                         snap["inputs"][sec][u]["label"] = CACHED
             status.append({"step": "캐시", "ok": True, "message": "저장된 실제 스냅샷 사용"})
+            return {"snapshot": save(snap), "status": status}
+        raw = load_bundled_real()
+        if raw:
+            snap = build_snapshot(REAL, raw["tickers"], raw["rates"], CACHED if raw.get("rates_real") else MANUAL,
+                                  [f"실시간 수집 불가. {raw.get('fetched_at', '')} 수집분 사용"])
+            snap["mode"] = CACHED
+            for sec in ("spots", "vols", "divs"):
+                for u in UNDERLYINGS:
+                    if snap["inputs"][sec][u]["label"] == REAL:
+                        snap["inputs"][sec][u]["label"] = CACHED
+            for u in UNDERLYINGS:
+                snap["quotes"][u]["label"] = CACHED
+            status.append({"step": "캐시", "ok": True, "message": "배포 시점 수집분 사용"})
             return {"snapshot": save(snap), "status": status}
         status.append({"step": "캐시", "ok": False, "message": "저장된 실제 스냅샷 없음. 가상 자료로 전환"})
         return {"snapshot": synthetic(), "status": status}

@@ -1,6 +1,6 @@
 # 검증 보고서
 
-실행 환경: Python 3.13, numpy 2.5, scipy 1.18 (Linux). 명령: `cd backend && python -m pytest`
+실행 환경: Python 3.13, numpy 2.5 (Linux). 명령: `cd backend && python -m pytest`
 
 ## 요약
 

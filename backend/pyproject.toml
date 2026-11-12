@@ -3,7 +3,7 @@ name = "mini-st-front-office"
 version = "0.1.0"
 description = "금융공학 기반 프런트 시스템 학습용 축소판"
 requires-python = ">=3.10"
-dependencies = ["fastapi>=0.110", "uvicorn>=0.27", "pydantic>=2.5", "numpy>=1.26", "scipy>=1.11", "httpx>=0.26", "yfinance>=0.2.40", "tzdata"]
+dependencies = ["fastapi>=0.110", "uvicorn>=0.27", "pydantic>=2.5", "numpy>=1.26", "httpx>=0.26", "yfinance>=0.2.40", "tzdata"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

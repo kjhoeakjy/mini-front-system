@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// 빌드 결과를 백엔드가 그대로 제공한다. 개발 서버에서는 API를 8000번 포트로 넘긴다.
-export default defineConfig({
+// 기본 빌드: 백엔드가 제공하는 backend/app/static. pages 모드: 정적 배포용 site/ (상대 경로).
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  build: { outDir: "../backend/app/static", emptyOutDir: true, chunkSizeWarningLimit: 1200 },
+  base: mode === "pages" ? "./" : "/",
+  build: { outDir: mode === "pages" ? "../site" : "../backend/app/static", emptyOutDir: true, chunkSizeWarningLimit: 1200 },
   server: { proxy: { "/api": "http://127.0.0.1:8000" } },
-});
+}));

@@ -10,3 +10,4 @@ frontend/dist/
 *.egg-info/
 .DS_Store
 test-results/
+site/

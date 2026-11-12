@@ -8,8 +8,6 @@ from __future__ import annotations
 import os
 from datetime import date, datetime, timedelta, timezone
 
-import httpx
-
 from .base import ProviderError
 
 SERIES = {"DGS3MO": 0.25, "DGS1": 1.0, "DGS2": 2.0}
@@ -28,6 +26,7 @@ def fetch_rate(series: str, timeout: float = 15.0) -> dict:
     key = os.environ.get("FRED_API_KEY", "").strip()
     start = (date.today() - timedelta(days=30)).isoformat()
     try:
+        import httpx
         if key:
             r = httpx.get("https://api.stlouisfed.org/fred/series/observations",
                           params={"series_id": series, "api_key": key, "file_type": "json", "observation_start": start}, timeout=timeout)

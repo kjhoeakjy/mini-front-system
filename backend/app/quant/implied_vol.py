@@ -1,11 +1,9 @@
-"""유럽형 BSM 기준 내재변동성 역산 (Brent 방법)."""
+"""유럽형 BSM 기준 내재변동성 역산 (이분법). 가격은 변동성의 단조증가함수이므로 해가 유일하다."""
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 from typing import Optional
-
-from scipy.optimize import brentq
 
 from .black_scholes import bsm
 
@@ -43,5 +41,14 @@ def implied_volatility(market_price: float, option_type: str, S: float, K: float
     f_lo, f_hi = f(SIGMA_LO), f(SIGMA_HI)
     if f_lo * f_hi > 0:
         return IvResult(None, "NO_ROOT_IN_BRACKET", f"변동성 {SIGMA_LO}~{SIGMA_HI} 구간에 해가 없음", lo, hi)
-    iv = brentq(f, SIGMA_LO, SIGMA_HI, xtol=1e-10, maxiter=200)
+    a, b = SIGMA_LO, SIGMA_HI
+    for _ in range(200):
+        mid = 0.5 * (a + b)
+        if f(mid) > 0:
+            b = mid
+        else:
+            a = mid
+        if b - a < 1e-12:
+            break
+    iv = 0.5 * (a + b)
     return IvResult(float(iv), "OK", "유럽형 BSM 기준 역산값", lo, hi)

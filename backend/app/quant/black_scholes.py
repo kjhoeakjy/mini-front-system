@@ -9,9 +9,19 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
-from scipy.stats import norm
 
 MODEL_VERSION = "bsm-v1"
+_SQRT2, _INV_SQRT_2PI = math.sqrt(2.0), 1.0 / math.sqrt(2.0 * math.pi)
+
+
+def norm_cdf(x: float) -> float:
+    """표준정규 누적분포함수."""
+    return 0.5 * math.erfc(-x / _SQRT2)
+
+
+def norm_pdf(x: float) -> float:
+    """표준정규 확률밀도함수."""
+    return _INV_SQRT_2PI * math.exp(-0.5 * x * x)
 
 
 @dataclass(frozen=True)
@@ -62,20 +72,20 @@ def bsm(option_type: str, S: float, K: float, T: float, r: float, q: float, sigm
     sq = sigma * math.sqrt(T)
     d1 = (math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / sq
     d2 = d1 - sq
-    pdf = norm.pdf(d1)
+    pdf = norm_pdf(d1)
     gamma = df_q * pdf / (S * sq)
     vega = S * df_q * pdf * math.sqrt(T)
     decay = -S * df_q * pdf * sigma / (2.0 * math.sqrt(T))
     if ot == "CALL":
-        price = S * df_q * norm.cdf(d1) - K * df_r * norm.cdf(d2)
-        delta = df_q * norm.cdf(d1)
-        theta = decay - r * K * df_r * norm.cdf(d2) + q * S * df_q * norm.cdf(d1)
-        rho = K * T * df_r * norm.cdf(d2)
+        price = S * df_q * norm_cdf(d1) - K * df_r * norm_cdf(d2)
+        delta = df_q * norm_cdf(d1)
+        theta = decay - r * K * df_r * norm_cdf(d2) + q * S * df_q * norm_cdf(d1)
+        rho = K * T * df_r * norm_cdf(d2)
     else:
-        price = K * df_r * norm.cdf(-d2) - S * df_q * norm.cdf(-d1)
-        delta = df_q * (norm.cdf(d1) - 1.0)
-        theta = decay + r * K * df_r * norm.cdf(-d2) - q * S * df_q * norm.cdf(-d1)
-        rho = -K * T * df_r * norm.cdf(-d2)
+        price = K * df_r * norm_cdf(-d2) - S * df_q * norm_cdf(-d1)
+        delta = df_q * (norm_cdf(d1) - 1.0)
+        theta = decay + r * K * df_r * norm_cdf(-d2) - q * S * df_q * norm_cdf(-d1)
+        rho = -K * T * df_r * norm_cdf(-d2)
     return BsmResult(price, delta, gamma, vega, theta, rho, d1, d2)
 
 

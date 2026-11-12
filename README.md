@@ -11,14 +11,24 @@
 
 | 메뉴 | 내용 |
 |---|---|
-| ① 시장 | SPY·QQQ 현물가, 금리, 실현변동성, 상관계수, 배당. 출처·기준일·품질 표기, 수동 입력, 스냅샷 저장 |
-| ② 옵션 | 유럽형 콜·풋의 BSM 가격과 Greeks, 충격 손익 비교(Delta / Delta+Gamma / 재평가), 민감도 그래프 |
-| ③ 구조화 | SPY·QQQ worst-of 스텝다운 노트의 지급 규칙, 예시 경로, Monte Carlo 이론가·상환 분포·Greeks |
-| ④ 장부 | 포지션별 평가금액과 기초자산별 Delta·Gamma·Vega 합계 |
-| ⑤ 헤지 | 델타 중립 가상 거래 수량, 헤지 전후 비교, 재헤지 주기별 시뮬레이션 |
-| ⑥ 스트레스 | 현물·변동성·금리·상관계수 충격의 재평가 손익과 Greeks 근사 비교, 충격 격자 |
+| ① 시장 데이터 | SPY·QQQ 현물가, 금리, 실현변동성, 상관계수, 배당수익률. 출처·기준일 표기, 수기 입력, 스냅샷 저장 |
+| ② 옵션 가격결정 | 유럽형 콜·풋의 BSM 이론가와 Greeks, 충격 손익 비교(Delta / Delta+Gamma / 재평가), 민감도 그래프 |
+| ③ 구조화상품 | SPY·QQQ worst-of 스텝다운 노트의 손익구조, 예시 경로, Monte Carlo 이론가·상환 분포·Greeks |
+| ④ 포트폴리오 위험 | 포지션별 평가금액과 기초자산별 Delta·Gamma·Vega 합계 |
+| ⑤ 델타 헤지 | 델타 중립 가상 거래 수량, 헤지 전후 비교, 재헤지 주기별 시뮬레이션 |
+| ⑥ 스트레스 테스트 | 현물·변동성·금리·상관계수 충격의 재평가 손익과 Greeks 근사 비교, 충격 격자 |
 
 기본 장부: SPY 콜 1계약 매도(90일), QQQ 풋 1계약 매수(180일), 스텝다운 노트 10개 매도, 현물 0주.
+
+## 웹 실행 (GitHub Pages)
+
+https://kjhoeakjy.github.io/mini-front-system/
+
+서버 없이 브라우저에서 동작한다. 동일한 Python 계산 코드(`backend/app`)를 Pyodide(WebAssembly)로 실행하며, 화면은 API 호출을 Web Worker 내부의 FastAPI 앱에 전달한다. 최초 접속 시 실행 환경 로딩에 수 초가 소요된다.
+
+- 배포: `main` push 시 `.github/workflows/pages.yml`이 `scripts/build_pages.sh`를 실행해 `site/`를 게시한다.
+- 시장 자료: 브라우저에서는 외부 시세 API 호출이 제한되므로 배포 시점에 수집한 원자료(`backend/fixtures/real_raw.json`)를 `CACHED REAL SNAPSHOT`으로 사용한다. 수집 실패 시 가상 자료로 전환한다.
+- 저장 내용(스냅샷, 가상 거래)은 브라우저 메모리에 보관되며 새로 고침 시 초기화된다.
 
 ## 실행 (Windows)
 
@@ -49,7 +59,7 @@ cd backend
 python -m pytest
 ```
 
-브라우저 스모크 테스트(선택, Node.js와 playwright 필요): 서버 실행 후 `node scripts/smoke_e2e.cjs`
+브라우저 스모크 테스트(선택, Node.js와 playwright 필요): 서버 실행 후 `node scripts/smoke_e2e.cjs`. Pages 빌드는 `site/`를 정적 서버로 연 뒤 `STATIC=1 BASE_URL=<주소> node scripts/smoke_e2e.cjs`
 
 ### 화면 수정 (선택)
 

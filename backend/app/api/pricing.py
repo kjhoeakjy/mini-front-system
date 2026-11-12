@@ -53,9 +53,9 @@ def european(b: EuropeanIn):
         "signed_position_mtm_usd": res.price * scale,
         "greeks_per_share": {"delta": res.delta, "gamma": res.gamma, "vega_raw": res.vega_raw, "theta_annual": res.theta_annual, "rho_raw": res.rho_raw},
         "greeks_position": position_greeks(res, b.multiplier, b.signed_quantity),
-        "units": {"delta_shares": "기초자산 $1 상승 시 USD 변화(=주식 환산 수량)", "gamma_per_usd": "기초자산 $1 상승 시 delta 변화",
-                  "vega_per_1volpt_usd": "변동성 +1%p 시 USD 변화", "theta_per_calendar_day_usd": "1일 경과 시 USD 변화",
-                  "rho_per_100bp_usd": "금리 +100bp 시 USD 변화"},
+        "units": {"delta_shares": "기초자산 $1 상승 시 가치 변화 (주식 환산 수량)", "gamma_per_usd": "기초자산 $1 상승 시 Delta 변화",
+                  "vega_per_1volpt_usd": "변동성 +1%p 시 가치 변화", "theta_per_calendar_day_usd": "1일 경과 시 가치 변화",
+                  "rho_per_100bp_usd": "금리 +100bp 시 가치 변화"},
         "hedge_shares_for_delta_neutral": None if res.delta is None else -res.delta * scale,
         "warnings": ["가상 장외 유럽형 현금결제 계약 기준. 상장 SPY·QQQ 옵션(미국형)의 거래소 가격이 아님"] + ([res.note] if res.note else []),
     }

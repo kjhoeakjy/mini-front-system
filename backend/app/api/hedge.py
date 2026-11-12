@@ -16,6 +16,7 @@ router = APIRouter(prefix="/hedge", tags=["hedge"])
 
 class DeltaIn(BaseModel):
     snapshot_id: Optional[str] = None
+    book: str = book_service.BOOK
     n_paths: int = 20000
     seed: int = 42
     integer_shares: bool = True
@@ -27,7 +28,7 @@ class DeltaIn(BaseModel):
 @router.post("/delta")
 def delta(b: DeltaIn):
     snap, cfg = snapshot_or_404(b.snapshot_id), mc_config(b.n_paths, b.seed)
-    rep, positions, inp = book_risk(snap, cfg)
+    rep, positions, inp = book_risk(snap, cfg, b.book)
     stock = {p["spec"]["underlying"]: p for p in positions if p["instrument_type"] == "SPOT"}
     cur = {u: (stock[u]["signed_quantity"] if u in stock else 0.0) for u in UNDERLYINGS}
     plan = delta_hedge(rep["totals"]["delta"], inp.spots, cur, rep["totals"]["gamma"], b.integer_shares, b.cost_bps, b.fixed_fee)
@@ -40,8 +41,8 @@ def delta(b: DeltaIn):
             if u in stock:
                 book_service.update_position(stock[u]["id"], qty=cur[u] + t)
             else:
-                book_service.add_position("SPOT", f"{u} 현물", {"underlying": u, "currency": "USD"}, t)
-            book_service.record_hedge(u, t, inp.spots[u], plan[u]["estimated_cost"], snap["snapshot_id"])
+                book_service.add_position("SPOT", f"{u} 현물", {"underlying": u, "currency": "USD"}, t, book=b.book)
+            book_service.record_hedge(u, t, inp.spots[u], plan[u]["estimated_cost"], snap["snapshot_id"], b.book)
         applied = True
     return {"plan": plan, "applied": applied, "data": labels(snap), "result_label": "MODEL ESTIMATE",
             "remaining": {"gamma": rep["totals"]["gamma"], "vega": rep["totals"]["vega"], "rho": rep["totals"]["rho"]},

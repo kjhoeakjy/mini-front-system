@@ -15,7 +15,34 @@ const STATIC = process.env.STATIC === "1"; // Pages 빌드: 서버 API 대조 �
   const check = (c, msg) => { if (!c) throw new Error("실패: " + msg); console.log("통과: " + msg); };
 
   await page.goto(BASE);
-  await page.waitForSelector("text=DATA MODE", { timeout: 120000 });
+  await page.waitForSelector("p.lead", { timeout: 120000 });
+  check(await page.locator(".top .badge").first().innerText() === "MANUAL SCENARIO", "기본 모드: 기준 시나리오 표기");
+  const kpi = (k) => page.locator(".kpi .v").nth(k).innerText();
+  check((await kpi(0)) === "$1,045.06" && (await kpi(2)) === "-$1,045.06", "가격결정: 계약당 이론가 $1,045.06, 매도 평가금액 -$1,045.06");
+  await page.waitForSelector(".recharts-line");
+  await shot("0-1-pricing");
+  await page.click('button:has-text("다음: Greeks")');
+  await page.waitForSelector("text=Full Repricing");
+  check((await kpi(0)) === "-63.68주", "Greeks: 포지션 Delta -63.68주");
+  await shot("0-2-greeks");
+  await page.click('button:has-text("다음: 델타 헤지")');
+  await page.waitForSelector('button:has-text("가상 헤지 적용")');
+  check((await kpi(2)) === "매수 64주", "헤지: SPY 64주 매수 제안");
+  await page.click('button:has-text("가상 헤지 적용")');
+  await page.waitForSelector("text=추가 거래 없음");
+  check((await kpi(0)) === "64주" && (await kpi(1)) === "+0.32주", "헤지 적용 후 현물 64주, 순 Delta +0.32주");
+  await shot("0-3-hedge");
+  await page.click('button:has-text("다음: 스트레스 테스트")');
+  await page.waitForSelector("text=합산 평가손익");
+  const lead = await page.locator("p.lead").innerText();
+  check(lead.includes("−$340.73") && lead.includes("현물 64주") && !lead.includes("$0.00"), "스트레스: 헤지 전후 재평가 손익 표시 (" + lead.slice(0, 60) + ")");
+  await shot("0-4-stress");
+  await page.click('button:has-text("다음: 구조화")');
+  await page.waitForSelector("text=발행가 일치 참여율");
+  check((await kpi(0)) === "$1,003.48", "구조화: 원금지급형 채권 이론가 $1,003.48");
+  await shot("0-5-note");
+
+  await page.click('.top .seg button:has-text("고급")');
   check(await page.locator(".top .badge").first().innerText() !== "", "상단에 자료 표기가 보임");
   await page.waitForSelector("text=SPY 현물가");
   await shot("1-market");

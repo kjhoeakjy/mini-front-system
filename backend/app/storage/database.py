@@ -35,6 +35,8 @@ def conn():
     c.row_factory = sqlite3.Row
     try:
         c.executescript(SCHEMA)
+        if "book_name" not in [r[1] for r in c.execute("PRAGMA table_info(virtual_hedge_trades)")]:
+            c.execute("ALTER TABLE virtual_hedge_trades ADD COLUMN book_name TEXT DEFAULT 'DEMO'")
         yield c
         c.commit()
     finally:

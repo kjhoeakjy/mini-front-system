@@ -31,7 +31,7 @@ export default function OptionLab({ snap }: Ctx) {
     <>
       <h1>② 옵션 가격결정</h1>
       <div className="grid g2">
-        <Card title="계약 조건 · 시장 입력">
+        <Card title="계약 조건 · 시장 입력 (장부 미반영)">
           <div className="form">
             <label>기초자산<select value={f.underlying} onChange={(e) => { setF(init(e.target.value)); setEdited(false); }}><option>SPY</option><option>QQQ</option></select></label>
             <label>옵션 종류<select value={f.option_type} onChange={(e) => set("option_type", e.target.value)}><option value="CALL">콜 CALL</option><option value="PUT">풋 PUT</option></select></label>
@@ -76,13 +76,13 @@ export default function OptionLab({ snap }: Ctx) {
         </tbody></table>
       </Card>}
       {r?.curves && <div className="grid g2" style={{ marginTop: 12 }}>
-        <Card title="현물가별 포지션 가치 · 만기 손익구조">
+        <Card title="현물가별 포지션 가치 · 만기 payoff">
           <ResponsiveContainer width="100%" height={220}><LineChart data={r.curves.by_spot}><CartesianGrid stroke="var(--line)" vertical={false} />
             <XAxis dataKey="spot" {...axis} tickFormatter={(v) => fmt(v, 0)} type="number" domain={["dataMin", "dataMax"]} /><YAxis {...axis} width={55} tickFormatter={(v) => fmt(v, 0)} />
             <Tooltip {...chartTip} formatter={(v: any) => usd(v)} labelFormatter={(v) => "현물가 " + fmt(v)} /><Legend />
             <ReferenceLine x={f.spot} stroke="var(--mut)" strokeDasharray="3 3" />
             <Line name="현재 가치" dataKey="price" stroke="var(--chart1)" dot={false} isAnimationActive={false} />
-            <Line name="만기 손익구조" dataKey="payoff" stroke="var(--chart2)" dot={false} strokeDasharray="4 3" isAnimationActive={false} />
+            <Line name="만기 payoff (프리미엄 제외)" dataKey="payoff" stroke="var(--chart2)" dot={false} strokeDasharray="4 3" isAnimationActive={false} />
           </LineChart></ResponsiveContainer>
         </Card>
         <Card title="현물가별 Delta · Gamma">

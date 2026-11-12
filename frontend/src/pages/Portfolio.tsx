@@ -16,7 +16,7 @@ export default function Portfolio({ snap, nPaths, seed, bookVer, bumpBook }: Ctx
       <Err e={err} /><Err e={risk.error} />{risk.loading && <Loading text="포트폴리오 평가 중" />}
       {r && <>
         <div className="grid g4">
-          <Kpi label="포트폴리오 평가금액" value={<Signed v={t.mtm} />} />
+          <Kpi label="포트폴리오 평가금액 (MTM)" value={<Signed v={t.mtm} />} sub="현재 모형 가치. 매도 포지션은 음수" />
           {UND.map((u) => <Kpi key={u} label={`${u} 순 Delta`} value={<Signed v={t.delta[u]} unit="주" />} sub={<>달러 Delta <Signed v={t.dollar_delta[u]} d={0} /></>} />)}
           {UND.map((u) => <Kpi key={u + "v"} label={`${u} Vega`} value={<Signed v={t.vega[u]} />} sub="변동성 +1%p" />)}
           <Kpi label="Theta (노트 제외)" value={<Signed v={t.theta_partial} />} sub="1일 경과" />

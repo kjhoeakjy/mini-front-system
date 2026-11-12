@@ -14,19 +14,26 @@ router = APIRouter(tags=["portfolio"])
 
 
 @router.get("/book")
-def book(snapshot_id: Optional[str] = None):
+def book(snapshot_id: Optional[str] = None, book: str = book_service.BOOK):
     snap = snapshot_or_404(snapshot_id)
-    return {"book_name": book_service.BOOK, "positions": book_service.ensure(snap), "hedge_trades": book_service.hedge_trades()}
+    try:
+        return {"book_name": book, "positions": book_service.ensure(snap, book), "hedge_trades": book_service.hedge_trades(book)}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
 
 
 class ResetIn(BaseModel):
     snapshot_id: Optional[str] = None
+    book: str = book_service.BOOK   # 지정한 장부만 재생성한다
 
 
 @router.post("/book/reset")
 def reset(b: ResetIn):
     snap = snapshot_or_404(b.snapshot_id)
-    return {"positions": book_service.reset(snap), "based_on_snapshot": snap["snapshot_id"]}
+    try:
+        return {"positions": book_service.reset(snap, b.book), "book_name": b.book, "based_on_snapshot": snap["snapshot_id"]}
+    except ValueError as e:
+        raise HTTPException(422, str(e))
 
 
 class PositionIn(BaseModel):
@@ -62,6 +69,7 @@ def patch_position(position_id: str, b: PatchIn):
 
 class RiskIn(BaseModel):
     snapshot_id: Optional[str] = None
+    book: str = book_service.BOOK
     n_paths: int = 20000
     seed: int = 42
 
@@ -69,7 +77,7 @@ class RiskIn(BaseModel):
 @router.post("/risk/portfolio")
 def risk_portfolio(b: RiskIn):
     snap, cfg = snapshot_or_404(b.snapshot_id), mc_config(b.n_paths, b.seed)
-    rep, _, inp = book_risk(snap, cfg)
+    rep, _, inp = book_risk(snap, cfg, b.book)
     out = {**rep, "data": labels(snap), "spots": inp.spots, "result_label": "MODEL ESTIMATE", "n_paths": cfg.n_paths, "seed": cfg.seed,
            "notes": ["평가금액(MTM)은 현재 모형 가치이며 손익이 아님. 손익 계산에는 거래가격 또는 이전 스냅샷이 필요함",
                      "노트 Theta를 제공하지 않으므로 장부 Theta 합계는 부분 집계임",

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import hedge, market, portfolio, pricing, stress, structuring
+from .api import deal, hedge, market, portfolio, pricing, simple_structuring, stress, structuring
 
 VERSION = "0.1.0"
 STATIC = Path(__file__).resolve().parent / "static"
@@ -35,7 +35,7 @@ def health():
     return {"status": "ok", "version": VERSION, "trading": "disabled", "purpose": "실제 주문 기능 없음"}
 
 
-for r in (market.router, pricing.router, structuring.router, portfolio.router, hedge.router, stress.router):
+for r in (market.router, pricing.router, structuring.router, simple_structuring.router, portfolio.router, hedge.router, stress.router, deal.router):
     v1.include_router(r)
 app.include_router(v1)
 

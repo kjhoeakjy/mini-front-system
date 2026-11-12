@@ -17,6 +17,7 @@ router = APIRouter(prefix="/risk", tags=["stress"])
 
 class StressIn(BaseModel):
     snapshot_id: Optional[str] = None
+    book: str = "DEMO"
     n_paths: int = 20000
     seed: int = 42
     scenarios: Optional[list] = None   # 생략 시 기본 시나리오 전체
@@ -30,9 +31,9 @@ def presets():
 @router.post("/stress")
 def stress(b: StressIn):
     snap, cfg = snapshot_or_404(b.snapshot_id), mc_config(b.n_paths, b.seed)
-    rep, positions, inp = book_risk(snap, cfg)
+    rep, positions, inp = book_risk(snap, cfg, b.book)
     out = run_scenarios(positions, inp, b.scenarios or PRESETS, cfg, rep["totals"])
-    out.update({"positions": [{"id": p["id"], "name": p["name"]} for p in positions], "data": labels(snap), "result_label": "MODEL ESTIMATE",
+    out.update({"positions": [{"id": p["id"], "name": p["name"], "instrument_type": p["instrument_type"]} for p in positions], "data": labels(snap), "result_label": "MODEL ESTIMATE",
                 "definition": "시나리오 손익 = 충격 후 장부 평가금액 - 기준 장부 평가금액. VaR나 손실 확률 예측이 아님"})
     out["valuation_id"] = log_valuation("stress", b.model_dump(), {"scenarios": [{k: s[k] for k in ("id", "pnl_full_reprice")} for s in out["scenarios"]]},
                                         snap["snapshot_id"], MODEL_VERSION, cfg.seed, cfg.n_paths)

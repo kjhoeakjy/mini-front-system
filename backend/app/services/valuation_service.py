@@ -28,8 +28,11 @@ def mc_config(n_paths: int = 20000, seed: int = 42) -> McConfig:
     return McConfig(n_paths=n_paths, seed=seed)
 
 
-def book_risk(snap: dict, cfg: McConfig) -> tuple[dict, list, MarketInputs]:
-    positions = book_service.ensure(snap)
+def book_risk(snap: dict, cfg: McConfig, book: str = book_service.BOOK) -> tuple[dict, list, MarketInputs]:
+    try:
+        positions = book_service.ensure(snap, book)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
     inp = inputs_from_snapshot(snap)
     key = (snap["snapshot_id"], json.dumps(positions, sort_keys=True), cfg.n_paths, cfg.seed)
     if key not in _cache:

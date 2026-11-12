@@ -40,4 +40,5 @@ def evaluate(spec: AutocallSpec, points: list) -> dict:
         sel.append(len(t) - 1)
     return {"amount": res.amount, "redeem_time": res.redeem_time, "category": res.category, "knocked_in": res.knocked_in,
             "worst_at_redeem": res.worst_at_redeem, "steps": res.steps, "pnl_vs_notional": res.amount - spec.notional,
-            "path": [{"t": round(float(t[i]), 4), "ratio1": round(float(r1[i]), 4), "ratio2": round(float(r2[i]), 4)} for i in sel]}
+            "path": [{"t": round(float(t[i]), 4), "ratio1": round(float(r1[i]), 4), "ratio2": round(float(r2[i]), 4),
+                      "worst": round(float(min(r1[i], r2[i])), 4)} for i in sel]}

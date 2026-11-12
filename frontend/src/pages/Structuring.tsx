@@ -64,7 +64,7 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
               <div><b>6</b>만기 W &lt; {f.mb}%, 낙인 발생(기간 중 W ≤ {f.ki}%): $1,000 × W 상환</div>
             </div>
           </Card>
-          <Card title="예시 경로별 상환금액">
+          <Card title="예시 경로별 상환금액 (worst-of 경로)">
             <Err e={ex.error} />{ex.loading && <Loading />}
             {ex.data && <table><thead><tr><th>경로</th><th>상환금액</th><th>액면 대비</th><th>상환 시점</th><th className="l">낙인</th></tr></thead><tbody>
               {ex.data.examples.map((e: any) => <tr key={e.id}><td>{e.name}</td><td>{usd(e.result.amount)}</td><td><Signed v={e.result.pnl_vs_notional} /></td><td>{e.result.redeem_time}년</td><td className="l">{e.result.knocked_in ? "발생" : "미발생"}</td></tr>)}
@@ -74,7 +74,7 @@ export default function Structuring({ snap, nPaths, seed }: Ctx) {
               <Tooltip {...chartTip} formatter={(v: any) => fmt(v * 100, 1) + "%"} labelFormatter={(v) => v + "년"} />
               <ReferenceLine y={f.ki / 100} stroke="var(--neg)" strokeDasharray="4 3" label={{ value: "낙인", fill: "var(--neg)", fontSize: 10, position: "insideBottomLeft" }} />
               <ReferenceLine y={f.mb / 100} stroke="var(--mut)" strokeDasharray="4 3" />
-              {ex.data.examples.map((e: any, k: number) => <Line key={e.id} data={e.result.path} name={e.name} dataKey="ratio1" stroke={`var(--chart${k + 1})`} dot={false} isAnimationActive={false} />)}
+              {ex.data.examples.map((e: any, k: number) => <Line key={e.id} data={e.result.path} name={e.name} dataKey="worst" stroke={`var(--chart${k + 1})`} dot={false} isAnimationActive={false} />)}
             </LineChart></ResponsiveContainer>}
           </Card>
         </div>

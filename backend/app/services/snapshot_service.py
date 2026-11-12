@@ -122,15 +122,15 @@ def get(snapshot_id: str) -> dict | None:
 def latest(mode: str | None = None) -> dict | None:
     with conn() as c:
         if mode:
-            r = c.execute("SELECT body FROM market_snapshots WHERE mode=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (mode,)).fetchone()
+            r = c.execute("SELECT body FROM market_snapshots WHERE mode=? AND id NOT LIKE 'base_%' ORDER BY created_at DESC, rowid DESC LIMIT 1", (mode,)).fetchone()
         else:
-            r = c.execute("SELECT body FROM market_snapshots ORDER BY created_at DESC, rowid DESC LIMIT 1").fetchone()
+            r = c.execute("SELECT body FROM market_snapshots WHERE id NOT LIKE 'base_%' ORDER BY created_at DESC, rowid DESC LIMIT 1").fetchone()
     return json.loads(r["body"]) if r else None
 
 
 def list_all() -> list:
     with conn() as c:
-        rows = c.execute("SELECT id, created_at, as_of, mode, parent_id FROM market_snapshots ORDER BY created_at DESC, rowid DESC").fetchall()
+        rows = c.execute("SELECT id, created_at, as_of, mode, parent_id FROM market_snapshots WHERE id NOT LIKE 'base_%' ORDER BY created_at DESC, rowid DESC").fetchall()
     return [dict(r) for r in rows]
 
 
@@ -191,13 +191,16 @@ def refresh(mode: str = "auto") -> dict:
     return {"snapshot": save(build_snapshot(REAL, tickers, rates, rate_label, warnings)), "status": status}
 
 
-def manual(base_id: str, overrides: dict) -> dict:
-    """기존 스냅샷의 평가 입력 일부를 수동 값으로 바꾼 새 스냅샷. 원본은 유지한다."""
+def manual(base_id: str, overrides: dict, prefix: str = "snap") -> dict:
+    """기존 스냅샷의 평가 입력 일부를 수동 값으로 바꾼 새 스냅샷. 원본은 유지한다.
+
+    prefix가 base이면 단일 거래의 기준 시나리오용이며 최신 스냅샷 조회와 목록에서 제외된다.
+    """
     base = get(base_id)
     if not base:
         raise KeyError(base_id)
     snap = copy.deepcopy(base)
-    snap.update({"snapshot_id": new_id("snap"), "mode": MANUAL, "parent_id": base_id, "created_at": now_utc()})
+    snap.update({"snapshot_id": new_id(prefix), "mode": MANUAL, "parent_id": base_id, "created_at": now_utc()})
     inp = snap["inputs"]
     for sec in ("spots", "vols", "divs"):
         for u, v in (overrides.get(sec) or {}).items():
